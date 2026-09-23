@@ -1,7 +1,8 @@
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -13,27 +14,24 @@ export default async function handler(req, res) {
   const cleanId = videoId.substring(0, 11);
 
   try {
-    const pageRes = await fetch(`https://www.youtube.com/watch?v=${cleanId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9'
-      }
-    });
-    const html = await pageRes.text();
+    const listRes = await fetch(`https://video.google.com/timedtext?type=list&v=${cleanId}`);
+    const listText = await listRes.text();
 
-    const captionsMatch = html.match(/"captionTracks":\s*(\[.*?\])/);
-    if (!captionsMatch) {
+    if (!listText.includes('lang_code')) {
       return res.status(404).json({ error: 'Brak napisów dla tego filmu.' });
     }
 
-    const tracks = JSON.parse(captionsMatch[1]);
-    if (!tracks || tracks.length === 0) {
-      return res.status(404).json({ error: 'Brak dostępnych ścieżek napisów.' });
+    let lang = 'en';
+    if (!listText.includes('lang_code="en"')) {
+      if (listText.includes('lang_code="pl"')) {
+        lang = 'pl';
+      } else {
+        const matchLang = listText.match(/lang_code="([^"]+)"/);
+        if (matchLang) lang = matchLang[1];
+      }
     }
 
-    // Szukamy napisów po angielsku lub bierzemy pierwsze z brzegu
-    let selectedTrack = tracks.find(t => t.languageCode === 'en') || tracks[0];
-    const subRes = await fetch(selectedTrack.baseUrl);
+    const subRes = await fetch(`https://www.google.com/timedtext?lang=${lang}&v=${cleanId}`);
     const subText = await subRes.text();
 
     if (!subText || subText.trim() === '') {
