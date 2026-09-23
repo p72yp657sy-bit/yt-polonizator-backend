@@ -1,0 +1,8 @@
+{
+  "name": "yt-polonizator-backend",
+  "version": "1.0.0",
+  "main": "api/captions.js",
+  "dependencies": {
+    "youtube-caption-extractor": "^1.0.2"
+  }
+}
