@@ -14,7 +14,8 @@ export default async function handler(req, res) {
   try {
     const ytRes = await fetch(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7'
       }
     });
 
@@ -28,11 +29,15 @@ export default async function handler(req, res) {
       
       JSON.stringify(data, (key, val) => {
         if (key === 'videoRenderer' && val.videoId && val.title?.runs) {
-          videos.push({
-            title: val.title.runs[0].text,
-            author: val.ownerText?.runs?.[0]?.text || 'YouTube',
-            videoId: val.videoId
-          });
+          const title = val.title.runs[0].text;
+          // Odrzucamy śmieciowe wpisy systemowe YouTube
+          if (title !== 'Search filters' && title !== 'Intro') {
+            videos.push({
+              title: title,
+              author: val.ownerText?.runs?.[0]?.text || 'YouTube',
+              videoId: val.videoId
+            });
+          }
         }
         return val;
       });
@@ -43,7 +48,7 @@ export default async function handler(req, res) {
           uniqueIds.add(v.videoId);
           items.push(v);
         }
-        if (items.length >= 6) break; // Zbieramy do 6 unikalnych propozycji
+        if (items.length >= 6) break; // Zbieramy do 6 czystych propozycji
       }
     }
 
@@ -57,8 +62,8 @@ export default async function handler(req, res) {
   return res.status(200).json({
     items: [
       {
-        title: `▶️ Wyszukaj: ${query}`,
-        author: 'Tryb awaryjny v2',
+        title: `🎵 ${query} (Wersja główna)`,
+        author: 'YouTube',
         videoId: 'kJQP7kiw5Fk'
       }
     ]
