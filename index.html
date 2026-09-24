@@ -87,7 +87,7 @@
         }
         #results-list {
             margin-top: 8px;
-            max-height: 130px;
+            max-height: 140px;
             overflow-y: auto;
             background: #111322;
             border: 1px solid #32385c;
@@ -95,7 +95,7 @@
             display: none;
         }
         .result-item {
-            padding: 8px;
+            padding: 9px;
             font-size: 12px;
             border-bottom: 1px solid #23273e;
             cursor: pointer;
@@ -106,16 +106,16 @@
             color: #fff;
         }
         #chat-box {
-            height: 150px;
+            height: 140px;
             background: #0d0f18;
             border: 1px solid #32385c;
             border-radius: 8px;
             padding: 8px;
             overflow-y: auto;
             margin-bottom: 8px;
-            font-size: 13px;
+            font-size: 12px;
         }
-        .message { margin-bottom: 6px; }
+        .message { margin-bottom: 6px; line-height: 1.4; }
         .user { color: #93c5fd; }
         .bot { color: #86efac; }
         
@@ -125,7 +125,7 @@
             border-radius: 8px;
             font-size: 13px;
             color: #d1d5db;
-            max-height: 100px;
+            max-height: 80px;
             overflow-y: auto;
         }
     </style>
@@ -137,7 +137,7 @@
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
     <div class="section">
-        <input type="text" id="search-input" placeholder="np. Mr Beast">
+        <input type="text" id="search-input" placeholder="np. Dawid Podsiadło">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
         <div id="results-list"></div>
     </div>
@@ -145,24 +145,24 @@
     <div id="status-bar">Status: Gotowy do odtwarzania</div>
 
     <div id="player-container">
-        <iframe id="youtube-iframe" src="https://www.youtube.com/embed/NG2z0cTZr-g" allowfullscreen></iframe>
+        <iframe id="youtube-iframe" src="https://www.youtube.com/embed/kJQP7kiw5Fk" allowfullscreen></iframe>
     </div>
 
     <div class="section" style="margin-top: 12px;">
-        <div id="lyrics-area">Wpisz utwór powyżej i kliknij Szukaj.</div>
+        <div id="lyrics-area">Wyszukaj utwór, aby go odtworzyć.</div>
     </div>
 
     <div class="section">
-        <label style="font-size: 13px; color: #9ca3af;">Pobieranie napisów:</label>
+        <label style="font-size: 13px; color: #9ca3af;">Napisy / Tekst filmu:</label>
         <div id="chat-box">
-            <div class="message bot">Bot: Cześć! Kliknij poniżej, aby pobrać napisy dla wybranego wideo.</div>
+            <div class="message bot">Bot: Wybierz film z listy i kliknij przycisk poniżej, aby pobrać jego napisy.</div>
         </div>
-        <button onclick="sendMessage()">Pobierz / Sprawdź napisy</button>
+        <button onclick="fetchSubtitles()">Pobierz napisy wybranego filmu</button>
     </div>
 </div>
 
 <script>
-    let currentVideoId = "NG2z0cTZr-g";
+    let currentVideoId = "kJQP7kiw5Fk";
 
     async function searchSong() {
         const query = document.getElementById('search-input').value;
@@ -182,7 +182,8 @@
             const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
-            const results = Array.isArray(data) ? data : (data.items || data.results || [data]);
+            // Obsługujemy format { items: [...] } zwrócony przez Twój backend
+            const results = data.items || (Array.isArray(data) ? data : []);
             
             if (results.length > 0) {
                 lyricsArea.innerHTML = `<strong>Wybierz wersję z listy poniżej:</strong>`;
@@ -190,9 +191,9 @@
 
                 results.forEach(item => {
                     if (!item) return;
-                    const vId = item.videoid || item.id || item.videoId;
+                    const vId = item.videoId || item.videoid || item.id;
                     const vTitle = item.title || "Film bez tytułu";
-                    const vAuthor = item.author || item.channel || "";
+                    const vAuthor = item.author || "";
 
                     if (vId) {
                         const div = document.createElement('div');
@@ -203,9 +204,10 @@
                     }
                 });
 
-                const first = results.find(i => i && (i.videoid || i.id || i.videoId));
-                if (first) {
-                    selectVideo(first.videoid || first.id || first.videoId, first.author || first.channel || "", first.title || "");
+                // Automatycznie wybierz pierwszy film z listy
+                const first = results[0];
+                if (first && (first.videoId || first.videoid)) {
+                    selectVideo(first.videoId || first.videoid, first.author || "", first.title || "");
                 }
             } else {
                 lyricsArea.innerHTML = `Nie znaleziono wideo.`;
@@ -223,14 +225,13 @@
         document.getElementById('results-list').style.display = 'none';
     }
 
-    async function sendMessage() {
+    async function fetchSubtitles() {
         const chatBox = document.getElementById('chat-box');
 
-        chatBox.innerHTML += `<div class="message user">Pobieram napisy dla ID: ${currentVideoId}</div>`;
+        chatBox.innerHTML += `<div class="message user">Pobieram napisy (ID: ${currentVideoId})...</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Wysyłamy zapytanie metodą GET tak, jak oczekuje tego backend w api/translate.js
             const response = await fetch(`/api/translate?videoId=${currentVideoId}`);
             
             if (!response.ok) {
@@ -239,11 +240,11 @@
             }
 
             const subtitlesText = await response.text();
-            // Pokazujemy wycinek pobranych napisów
-            const shortText = subtitlesText.substring(0, 300) + '...';
-            chatBox.innerHTML += `<div class="message bot">Napisy pobrane pomyślnie:<br><small>${shortText}</small></div>`;
+            // Wyświetlamy skrócony podgląd pobranych napisów
+            const shortText = subtitlesText.replace(/<[^>]*>?/gm, '').substring(0, 250) + '...';
+            chatBox.innerHTML += `<div class="message bot">Sukces! Napisy:<br><span style="color:#d1d5db;">${shortText}</span></div>`;
         } catch (error) {
-            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: ${error.message}</div>`;
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: ${error.message} (Film nie ma dostępnych napisów).</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     }
