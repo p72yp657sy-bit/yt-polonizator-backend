@@ -12,37 +12,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Korzystamy z darmowego i stabilnego publicznego API do pobierania napisów z YouTube
-    const timedTextUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=pl`;
-    let response = await fetch(timedTextUrl);
-    
-    let captionsText = await response.text();
+    // Pobieramy stronę wideo, aby wyciągnąć transkrypt za pomocą alternatywnego, publicznego źródła
+    const response = await fetch(`https://video.google.com/timedtext?lang=pl&v=${videoId}`);
+    let text = await response.text();
 
-    // Jeśli nie ma polskiego, spróbujmy pobrać listę dostępnych języków
-    if (!captionsText || captionsText.trim() === '' || captionsText.includes('<error>')) {
-      const listUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&type=list`;
-      const listRes = await fetch(listUrl);
-      const listText = await listRes.text();
-
-      // Wyciągamy kod pierwszego lepszego dostępnego języka z XML-a
-      const langMatch = listText.match(/lang_code="([^"]+)"/);
-      if (langMatch && langMatch[1]) {
-        const langCode = langMatch[1];
-        const fallbackUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}`;
-        const fallbackRes = await fetch(fallbackUrl);
-        captionsText = await fallbackRes.text();
-      }
+    // Jeśli brak polskiego, spróbujmy pobrać angielski
+    if (!text || text.includes('<error>') || text.trim() === '') {
+      const responseEn = await fetch(`https://video.google.com/timedtext?lang=en&v=${videoId}`);
+      text = await responseEn.text();
     }
 
-    if (!captionsText || captionsText.trim() === '' || captionsText.includes('<error>')) {
-      return res.status(404).json({ error: 'Ten film nie udostępnia napisów w żadnym języku przez API.' });
+    if (!text || text.includes('<error>') || text.trim() === '') {
+      return res.status(404).json({ error: 'Napisy są niedostępne dla tego filmu (zablokowane przez YouTube).' });
     }
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send(captionsText);
+    return res.status(200).send(text);
 
   } catch (error) {
-    console.error('Błąd pobierania napisów:', error);
-    return res.status(500).json({ error: 'Nie udało się pobrać napisów: ' + error.message });
+    console.error('Błąd:', error);
+    return res.status(500).json({ error: 'Nie udało się pobrać napisów.' });
   }
 }
