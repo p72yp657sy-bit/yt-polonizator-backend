@@ -10,36 +10,44 @@
             background-color: #0d0f18;
             color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             background: #16192b;
-            padding: 20px;
+            padding: 16px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
         h1 {
             text-align: center;
-            font-size: 24px;
+            font-size: 20px;
+            margin: 0;
             background: linear-gradient(45deg, #ff4e50, #f9d423);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .subtitle {
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 15px;
+        }
         .section {
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
         input, button {
             width: 100%;
-            padding: 12px;
-            margin-top: 8px;
+            padding: 10px;
+            margin-top: 6px;
             border-radius: 8px;
             border: none;
-            font-size: 16px;
+            font-size: 14px;
             box-sizing: border-box;
         }
         input {
@@ -55,26 +63,55 @@
             transition: opacity 0.2s;
         }
         button:hover { opacity: 0.9; }
-        #chat-box {
+        
+        /* Styl odtwarzacza YouTube */
+        #player-container {
+            display: none;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #32385c;
+        }
+        #youtube-iframe {
+            width: 100%;
             height: 200px;
+            border: none;
+        }
+        #status-bar {
+            background: #143821;
+            color: #4ade80;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Styl czatu */
+        #chat-box {
+            height: 150px;
             background: #0d0f18;
             border: 1px solid #32385c;
             border-radius: 8px;
-            padding: 10px;
+            padding: 8px;
             overflow-y: auto;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
         }
-        .message { margin-bottom: 8px; }
+        .message { margin-bottom: 6px; }
         .user { color: #93c5fd; }
         .bot { color: #86efac; }
-        #result-area {
-            margin-top: 15px;
+        
+        #lyrics-area {
             background: #23273e;
             padding: 10px;
             border-radius: 8px;
-            min-height: 40px;
-            word-break: break-all;
+            font-size: 13px;
+            color: #d1d5db;
+            max-height: 120px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -82,25 +119,32 @@
 
 <div class="container">
     <h1>POLSKI YOUTUBE</h1>
-    <p style="text-align: center; font-size: 12px; color: #9ca3af;">Wersja 2.3 – Inteligentny Tekst PL</p>
+    <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
-    <!-- Sekcja wyszukiwania piosenek -->
+    <!-- Wyszukiwarka piosenek -->
     <div class="section">
-        <label for="search-input">Wpisz tytuł piosenki lub link:</label>
-        <input type="text" id="search-input" placeholder="np. James Blunt - Goodbye My Lover">
+        <input type="text" id="search-input" placeholder="Wpisz tytuł piosenki (np. James Blunt)">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
     </div>
 
-    <!-- Wynik / Tekst piosenki -->
-    <div class="section">
-        <div id="result-area">Wybierz utwór lub wpisz link, aby zobaczyć słowa piosenki poniżej.</div>
+    <!-- Status gotowości -->
+    <div id="status-bar">Status: Gotowy do odtwarzania</div>
+
+    <!-- Odtwarzacz YouTube -->
+    <div id="player-container">
+        <iframe id="youtube-iframe" src="" allowfullscreen></iframe>
     </div>
 
-    <!-- Sekcja czatu z AI -->
+    <!-- Tekst piosenki / Wyniki -->
+    <div class="section" style="margin-top: 12px;">
+        <div id="lyrics-area">Wybierz utwór lub wpisz link, aby zobaczyć słowa piosenki poniżej.</div>
+    </div>
+
+    <!-- Sekcja czatu z botem -->
     <div class="section">
-        <label>Porozmawiaj z botem:</label>
+        <label style="font-size: 13px; color: #9ca3af;">Porozmawiaj z botem:</label>
         <div id="chat-box">
-            <div class="message bot">Bot: Cześć! W czym mogę Ci dzisiaj pomóc?</div>
+            <div class="message bot">Bot: Cześć! W czym mogę Ci pomóc?</div>
         </div>
         <input type="text" id="chat-input" placeholder="Napisz wiadomość...">
         <button onclick="sendMessage()">Wyślij wiadomość</button>
@@ -108,34 +152,46 @@
 </div>
 
 <script>
-    // Funkcja do wyszukiwania piosenek (odpytuje Twój backend na Vercelu)
     async function searchSong() {
         const query = document.getElementById('search-input').value;
-        const resultArea = document.getElementById('result-area');
+        const lyricsArea = document.getElementById('lyrics-area');
+        const playerContainer = document.getElementById('player-container');
+        const youtubeIframe = document.getElementById('youtube-iframe');
+        const statusBar = document.getElementById('status-bar');
         
         if (!query) {
             alert('Wpisz tytuł piosenki!');
             return;
         }
 
-        resultArea.innerHTML = 'Szukam utworu i tekstów...';
+        lyricsArea.innerHTML = 'Szukam utworu i ładuję odtwarzacz...';
 
         try {
-            // Odpytuje endpoint /api/search oraz /api/lyrics (zgodnie z Twoją strukturą w folderze api/)
+            // Odpytuje endpoint /api/search w Twoim backendzie na Vercelu
             const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
-            if(data) {
-                resultArea.innerHTML = `<strong>Znaleziono:</strong> ${JSON.stringify(data)}`;
+            // Sprawdzenie czy backend zwrócił items (zgodnie z logiką YouTube API)
+            if (data && data.items && data.items.length > 0) {
+                const videoId = data.items[0].videoid || data.items[0].id;
+                const title = data.items[0].title;
+                const author = data.items[0].author || "";
+
+                // Włącz odtwarzacz YouTube iframe
+                youtubeIframe.src = `https://www.youtube.com/embed/${videoId}`;
+                playerContainer.style.display = 'block';
+                statusBar.style.display = 'block';
+                statusBar.innerHTML = `Status: Odtwarzam - ${author} ${title}`;
+
+                lyricsArea.innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
             } else {
-                resultArea.innerHTML = 'Nie znaleziono wyników.';
+                lyricsArea.innerHTML = `Znaleziono surowe dane: <br>${JSON.stringify(data)}`;
             }
         } catch (error) {
-            resultArea.innerHTML = 'Błąd połączenia z backendem: ' + error.message;
+            lyricsArea.innerHTML = 'Błąd wyszukiwania: ' + error.message;
         }
     }
 
-    // Funkcja do czatu
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const chatBox = document.getElementById('chat-box');
@@ -143,14 +199,13 @@
 
         if (!text) return;
 
-        // Dodaj wiadomość użytkownika do okna czatu
         chatBox.innerHTML += `<div class="message user">Ty: ${text}</div>`;
         input.value = '';
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Tutaj kierujemy zapytanie do odpowiedniego pliku w folderze api/ (np. dedykowanego endpointu czatu)
-            const response = await fetch('/api/translate', { // lub inny Twój endpoint bota
+            // Wysyłanie wiadomości do backendu (np. do pliku translate.js lub odpowiedniego endpointu)
+            const response = await fetch('/api/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text })
@@ -160,7 +215,7 @@
             const botReply = data.reply || data.text || "Otrzymano odpowiedź z serwera.";
             chatBox.innerHTML += `<div class="message bot">Bot: ${botReply}</div>`;
         } catch (error) {
-            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd komunikacji z serwerem.</div>`;
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd połączenia.</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     }
