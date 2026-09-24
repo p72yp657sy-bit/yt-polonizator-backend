@@ -12,37 +12,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Pobieramy stronę filmu na YouTube, aby wyciągnąć tokeny i adresy napisów
-    const ytPageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7'
+    // Korzystamy z darmowego i stabilnego publicznego API do pobierania napisów z YouTube
+    const timedTextUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=pl`;
+    let response = await fetch(timedTextUrl);
+    
+    let captionsText = await response.text();
+
+    // Jeśli nie ma polskiego, spróbujmy pobrać listę dostępnych języków
+    if (!captionsText || captionsText.trim() === '' || captionsText.includes('<error>')) {
+      const listUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&type=list`;
+      const listRes = await fetch(listUrl);
+      const listText = await listRes.text();
+
+      // Wyciągamy kod pierwszego lepszego dostępnego języka z XML-a
+      const langMatch = listText.match(/lang_code="([^"]+)"/);
+      if (langMatch && langMatch[1]) {
+        const langCode = langMatch[1];
+        const fallbackUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}`;
+        const fallbackRes = await fetch(fallbackUrl);
+        captionsText = await fallbackRes.text();
       }
-    });
-
-    const html = await ytPageRes.text();
-    
-    // Szukamy danych o napisach wewnątrz strony (captionTracks)
-    const match = html.match(/"captionTracks":\s*(\[.+?\])/);
-    
-    if (!match) {
-      return res.status(404).json({ error: 'Brak napisów dla tego filmu w kodzie strony.' });
     }
 
-    const tracks = JSON.parse(match[1]);
-    if (!tracks || tracks.length === 0) {
-      return res.status(404).json({ error: 'Brak dostępnych ścieżek napisów.' });
+    if (!captionsText || captionsText.trim() === '' || captionsText.includes('<error>')) {
+      return res.status(404).json({ error: 'Ten film nie udostępnia napisów w żadnym języku przez API.' });
     }
-
-    // Wybieramy polskie napisy lub pierwsze z brzegu
-    let selectedTrack = tracks.find(t => t.languageCode && t.languageCode.toLowerCase().startsWith('pl'));
-    if (!selectedTrack) {
-      selectedTrack = tracks[0];
-    }
-
-    // Pobieramy faktyczny plik z napisami
-    const captionsRes = await fetch(selectedTrack.baseUrl);
-    const captionsText = await captionsRes.text();
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(200).send(captionsText);
