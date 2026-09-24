@@ -64,7 +64,6 @@
         }
         button:hover { opacity: 0.9; }
         
-        /* Styl odtwarzacza YouTube */
         #player-container {
             display: none;
             background: #000;
@@ -88,8 +87,6 @@
             margin-top: 10px;
             display: none;
         }
-        
-        /* Styl czatu */
         #chat-box {
             height: 150px;
             background: #0d0f18;
@@ -121,26 +118,21 @@
     <h1>POLSKI YOUTUBE</h1>
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
-    <!-- Wyszukiwarka piosenek -->
     <div class="section">
-        <input type="text" id="search-input" placeholder="Wpisz tytuł piosenki (np. James Blunt)">
+        <input type="text" id="search-input" placeholder="np. James Blunt - Goodbye My Lover">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
     </div>
 
-    <!-- Status gotowości -->
     <div id="status-bar">Status: Gotowy do odtwarzania</div>
 
-    <!-- Odtwarzacz YouTube -->
     <div id="player-container">
         <iframe id="youtube-iframe" src="" allowfullscreen></iframe>
     </div>
 
-    <!-- Tekst piosenki / Wyniki -->
     <div class="section" style="margin-top: 12px;">
         <div id="lyrics-area">Wybierz utwór lub wpisz link, aby zobaczyć słowa piosenki poniżej.</div>
     </div>
 
-    <!-- Sekcja czatu z botem -->
     <div class="section">
         <label style="font-size: 13px; color: #9ca3af;">Porozmawiaj z botem:</label>
         <div id="chat-box">
@@ -164,28 +156,39 @@
             return;
         }
 
-        lyricsArea.innerHTML = 'Szukam utworu i ładuję odtwarzacz...';
+        lyricsArea.innerHTML = 'Szukam utworu...';
 
         try {
-            // Odpytuje endpoint /api/search w Twoim backendzie na Vercelu
-            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            // Używamy ulepszonego endpointu search-v2
+            const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
-            // Sprawdzenie czy backend zwrócił items (zgodnie z logiką YouTube API)
-            if (data && data.items && data.items.length > 0) {
-                const videoId = data.items[0].videoid || data.items[0].id;
-                const title = data.items[0].title;
-                const author = data.items[0].author || "";
+            let videoId = null;
+            let title = "";
+            let author = "";
 
-                // Włącz odtwarzacz YouTube iframe
+            // Obsługa różnych struktur danych zwracanych przez backend
+            if (data && data.items && data.items.length > 0) {
+                // Szukamy pierwszego elementu, który nie jest ekranem logowania/filtrem
+                const validItem = data.items.find(item => item.videoid && !item.title.includes("Sign in") && !item.title.includes("filters"));
+                const target = validItem || data.items[0];
+                
+                videoId = target.videoid || target.id;
+                title = target.title || "";
+                author = target.author || "";
+            } else if (data && data.videoId) {
+                videoId = data.videoId;
+                title = data.title || "";
+            }
+
+            if (videoId) {
                 youtubeIframe.src = `https://www.youtube.com/embed/${videoId}`;
                 playerContainer.style.display = 'block';
                 statusBar.style.display = 'block';
                 statusBar.innerHTML = `Status: Odtwarzam - ${author} ${title}`;
-
                 lyricsArea.innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
             } else {
-                lyricsArea.innerHTML = `Znaleziono surowe dane: <br>${JSON.stringify(data)}`;
+                lyricsArea.innerHTML = `Nie znaleziono poprawnego wideo. Odpowiedź serwera: <br>` + JSON.stringify(data);
             }
         } catch (error) {
             lyricsArea.innerHTML = 'Błąd wyszukiwania: ' + error.message;
@@ -204,18 +207,19 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Wysyłanie wiadomości do backendu (np. do pliku translate.js lub odpowiedniego endpointu)
+            // Wysyłamy zapytanie do endpointu translate.js
             const response = await fetch('/api/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ text: text, message: text })
             });
             const data = await response.json();
 
-            const botReply = data.reply || data.text || "Otrzymano odpowiedź z serwera.";
+            // Wyciągamy odpowiedź z różnych możliwych pól zwracanych przez backend
+            const botReply = data.reply || data.text || data.translated || data.result || JSON.stringify(data);
             chatBox.innerHTML += `<div class="message bot">Bot: ${botReply}</div>`;
         } catch (error) {
-            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd połączenia.</div>`;
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd połączenia z serwerem.</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     }
