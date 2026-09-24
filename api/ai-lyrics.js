@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   // Wpisujemy klucz bezpośrednio na sztywno do celów testowych
-  const apiKey = "TUTAJ_WKLEJ_SWOJ_KLUCZ_API";
+  const apiKey = "TAQ.Ab8RN6L3P8plfDMlSvm8XIn9hannjKWmM09qjg0dhkzL6hLu8Q";
 
   try {
     const prompt = `Podaj pełny tekst piosenki lub transkrypt dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
