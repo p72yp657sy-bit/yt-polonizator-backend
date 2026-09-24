@@ -117,7 +117,7 @@
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
     <div class="section">
-        <input type="text" id="search-input" placeholder="np. Miley Cyrus - climb">
+        <input type="text" id="search-input" placeholder="np. Bungee - sam">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
     </div>
 
@@ -142,7 +142,7 @@
 </div>
 
 <script>
-    // Domyślny identyfikator piosenki, aby czat od razu przyjmował wiadomości bez błędu
+    // Zabezpieczenie domyślnym ID, żeby czat od razu działał
     let currentVideoId = "NG2z0cTZr-g";
 
     async function searchSong() {
@@ -159,7 +159,6 @@
         lyricsArea.innerHTML = 'Szukam utworu...';
 
         try {
-            // Odpytujemy Twój backend na Vercelu
             const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
@@ -167,7 +166,6 @@
             let title = "";
             let author = "";
 
-            // Wyciąganie ID wideo z tablicy zwracanej przez Vercel
             const results = Array.isArray(data) ? data : (data.items || data.results || [data]);
             const target = results.find(item => item && (item.videoid || item.id || item.videoId));
             
@@ -202,14 +200,16 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Wysyłamy wiadomość wraz z wymaganym przez backend videoId
+            // Przesyłamy wszystkie możliwe warianty nazwy pola identyfikatora, które może sprawdzać backend
             const response = await fetch('/api/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     text: text, 
                     message: text,
-                    videoId: currentVideoId 
+                    videoId: currentVideoId,
+                    videoid: currentVideoId,
+                    id: currentVideoId
                 })
             });
             const data = await response.json();
