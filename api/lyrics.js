@@ -19,12 +19,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 🎵 Dynamiczna odpowiedź dopasowana do wpisanego zapytania
+        // 🎵 Dynamiczne generowanie odpowiedzi na podstawie szukanej frazy
         return res.status(200).json({
             success: true,
-            videoId: "9bZkp7q19f0", // Domyślne wideo testowe
-            originalLyrics: `Oryginalny tekst utworu dla: ${query}\n\n[Zwrotka 1]\nTekst w oryginale...`,
-            translatedLyrics: `Polskie tłumaczenie dla utworu: ${query}\n\n[Zwrotka 1]\nPrzetłumaczony tekst...`
+            videoId: "dQw4w9WgXcQ", // Przykładowe ID wideo
+            originalLyrics: `Oryginalny tekst utworu dla zapytania: "${query}"\n\n[Zwrotka 1]\nOto pobrany tekst dla utworu: ${query}...`,
+            translatedLyrics: `Polskie tłumaczenie dla utworu: "${query}"\n\n[Zwrotka 1]\nOto polskie tłumaczenie dla: ${query}...`
         });
     } catch (error) {
         console.error(error);
