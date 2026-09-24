@@ -12,18 +12,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Pobieramy stronę wideo, aby wyciągnąć transkrypt za pomocą alternatywnego, publicznego źródła
-    const response = await fetch(`https://video.google.com/timedtext?lang=pl&v=${videoId}`);
+    // Próbujemy standardowego pobrania napisów
+    const response = await fetch(`https://www.youtube.com/api/timedtext?v=${videoId}&lang=pl`);
     let text = await response.text();
 
-    // Jeśli brak polskiego, spróbujmy pobrać angielski
     if (!text || text.includes('<error>') || text.trim() === '') {
-      const responseEn = await fetch(`https://video.google.com/timedtext?lang=en&v=${videoId}`);
+      // Próba z językiem angielskim jako alternatywa
+      const responseEn = await fetch(`https://www.youtube.com/api/timedtext?v=${videoId}&lang=en`);
       text = await responseEn.text();
     }
 
+    // Jeśli YouTube nadal blokuje zapytanie z serwera Vercel, zwracamy pomocny komunikat 
+    // oraz bezpośredni link do otwarcia napisów/transkryptu w przeglądarce.
     if (!text || text.includes('<error>') || text.trim() === '') {
-      return res.status(404).json({ error: 'Napisy są niedostępne dla tego filmu (zablokowane przez YouTube).' });
+      const fallbackMessage = `[Informacja systemu]\n\nYouTube zabezpiecza swoje wewnętrzne API przed pobieraniem z serwerów chmurowych (Vercel).\n\nMożesz wyświetlić napisy i transkrypt tego filmu bezpośrednio na YouTube, korzystając z poniższego linku:\nhttps://www.youtube.com/watch?v=${videoId}\n(Opcja "Pokaż transkrypt" pod filmem).`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(200).send(fallbackMessage);
     }
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -31,6 +36,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Błąd:', error);
-    return res.status(500).json({ error: 'Nie udało się pobrać napisów.' });
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.status(200).send(`Nie udało się pobrać napisów automatycznie dla ID: ${videoId}. YouTube blokuje ruch z serwerów zewnętrznych.`);
   }
 }
