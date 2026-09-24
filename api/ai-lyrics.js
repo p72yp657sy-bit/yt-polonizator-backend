@@ -11,12 +11,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Brak tytułu utworu' });
   }
 
-  // Wklej tutaj swój pełny klucz zaczynający się od AQ...
   const apiKey = "TUTAJ_WKLEJ_SWOJ_KLUCZ_AQ";
 
   try {
-    const prompt = `Podaj pełny tekst piosenki lub transkrypt dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
+    const prompt = `Podaj pełny tekst piosenki dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
 
+    // Używamy klucza AQ jako tokenu w nagłówku x-goog-api-key lub Authorization
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
       method: 'POST',
       headers: {
