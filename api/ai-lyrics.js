@@ -16,12 +16,11 @@ export default async function handler(req, res) {
   try {
     const prompt = `Podaj pełny tekst piosenki dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
 
-    // Używamy klucza AQ jako tokenu w nagłówku x-goog-api-key lub Authorization
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+    // Próbujemy przekazać klucz AQ jako x-goog-api-key w parametrze URL lub nagłówku
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         contents: [{
