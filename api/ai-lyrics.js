@@ -13,7 +13,8 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'Brak skonfigurowanego klucza GEMINI_API_KEY na Vercelu.' });
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.status(200).send('DIAGNOSTYKA: Zmienna GEMINI_API_KEY jest pusta lub niezdefiniowana na Vercelu!');
   }
 
   try {
@@ -34,17 +35,17 @@ export default async function handler(req, res) {
     const data = await response.json();
     
     if (data.error) {
-      throw new Error(data.error.message || 'Błąd API Gemini');
+      // Zwracamy dokładny komunikat błędu z Google API na ekran!
+      return res.status(200).send(`DIAGNOSTYKA GOOGLE API ERROR: ${JSON.stringify(data.error)}`);
     }
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nie udało się wygenerować tekstu.';
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Model zwrócił pustą odpowiedź.';
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(200).send(aiText);
 
   } catch (error) {
-    console.error('Błąd AI:', error);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send('Błąd AI: ' + error.message);
+    return res.status(200).send('DIAGNOSTYKA CATCH ERROR: ' + error.message);
   }
 }
