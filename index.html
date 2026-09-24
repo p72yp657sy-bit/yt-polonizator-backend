@@ -186,7 +186,7 @@
             const results = Array.isArray(data) ? data : (data.items || data.results || [data]);
             
             if (results.length > 0) {
-                lyricsArea.innerHTML = `<strong>Znaleziono kilka wyników. Wybierz jeden poniżej:</strong>`;
+                lyricsArea.innerHTML = `<strong>Wybierz wersję z listy poniżej:</strong>`;
                 resultsList.style.display = 'block';
 
                 results.forEach(item => {
@@ -204,7 +204,7 @@
                     }
                 });
 
-                // Automatycznie wybierz pierwszy wynik od razu
+                // Ustaw pierwszy wynik domyślnie
                 const first = results.find(i => i && (i.videoid || i.id || i.videoId));
                 if (first) {
                     selectVideo(first.videoid || first.id || first.videoId, first.author || first.channel || "", first.title || "");
@@ -237,8 +237,9 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Uwzględniamy literówkę "videold" z serwera oraz standardowe nazwy
-            const response = await fetch('/api/translate', {
+            // Wysyłamy parametry w adresie URL oraz w ciele, aby backend na 100% je przechwycił
+            const url = `/api/translate?videold=${currentVideoId}&videoId=${currentVideoId}&id=${currentVideoId}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
