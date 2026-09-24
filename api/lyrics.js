@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-    // 🌐 Konfiguracja nagłówków CORS
+    // 🌐 Konfiguracja nagłówków CORS, aby frontend mógł się połączyć
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -19,12 +19,19 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 🎵 Dynamiczne generowanie odpowiedzi na podstawie szukanej frazy
+        // 🎵 W zależności od zapytania możemy dynamicznie dobrać ID filmu i teksty
+        let videoId = "dQw4w9WgXcQ"; // Domyślne ID
+        
+        // Proste dopasowanie dla testu (np. Sanah)
+        if (query.toLowerCase().includes("sanah")) {
+            videoId = "5qap5aO4i9A"; // Przykładowe ID innego utworu
+        }
+
         return res.status(200).json({
             success: true,
-            videoId: "dQw4w9WgXcQ", // Przykładowe ID wideo
-            originalLyrics: `Oryginalny tekst utworu dla zapytania: "${query}"\n\n[Zwrotka 1]\nOto pobrany tekst dla utworu: ${query}...`,
-            translatedLyrics: `Polskie tłumaczenie dla utworu: "${query}"\n\n[Zwrotka 1]\nOto polskie tłumaczenie dla: ${query}...`
+            videoId: videoId,
+            originalLyrics: `Oryginalny tekst dla zapytania: "${query}"\n\n[Zwrotka 1]\nOto pobrany tekst utworu dla hasła: ${query}...`,
+            translatedLyrics: `Polskie tłumaczenie dla zapytania: "${query}"\n\n[Zwrotka 1]\nOto tłumaczenie dla hasła: ${query}...`
         });
     } catch (error) {
         console.error(error);
