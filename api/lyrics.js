@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-    // 🌐 Konfiguracja nagłówków CORS dla dostępu z frontendu
+    // 🌐 Konfiguracja nagłówków CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -19,18 +19,15 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 🎵 Przygotowanie przykładowej odpowiedzi dla frontendu
-        const formattedOriginal = `Oryginalny tekst utworu dla zapytania: ${query}\n\n[Zwrotka 1]\nPrzykładowy tekst w oryginale...`;
-        const formattedTranslated = `Polskie tłumaczenie dla zapytania: ${query}\n\n[Zwrotka 1]\nPrzykładowe tłumaczenie...`;
-
+        // 🎵 Dynamiczna odpowiedź dopasowana do wpisanego zapytania
         return res.status(200).json({
             success: true,
-            videoId: "dQw4w9WgXcQ", // Przykładowe ID filmu z YouTube do odtwarzacza
-            originalLyrics: formattedOriginal,
-            translatedLyrics: formattedTranslated
+            videoId: "9bZkp7q19f0", // Domyślne wideo testowe
+            originalLyrics: `Oryginalny tekst utworu dla: ${query}\n\n[Zwrotka 1]\nTekst w oryginale...`,
+            translatedLyrics: `Polskie tłumaczenie dla utworu: ${query}\n\n[Zwrotka 1]\nPrzetłumaczony tekst...`
         });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: 'Błąd podczas pobierania tekstu' });
+        return res.status(500).json({ error: 'Błąd serwera' });
     }
 }
