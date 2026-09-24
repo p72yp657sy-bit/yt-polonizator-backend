@@ -11,16 +11,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Brak tytułu utworu' });
   }
 
-  // Wpisujemy klucz bezpośrednio na sztywno do celów testowych
-  const apiKey = "TAQ.Ab8RN6L3P8plfDMlSvm8XIn9hannjKWmM09qjg0dhkzL6hLu8Q";
+  // Wklej tutaj swój pełny klucz zaczynający się od AQ...
+  const apiKey = "TUTAJ_WKLEJ_SWOJ_KLUCZ_AQ";
 
   try {
     const prompt = `Podaj pełny tekst piosenki lub transkrypt dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         contents: [{
