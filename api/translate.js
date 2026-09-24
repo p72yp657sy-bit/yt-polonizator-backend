@@ -29,11 +29,14 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Brak napisów dla tego filmu.' });
     }
 
-    // Szukamy napisów po polsku (pl lub pl-PL) lub bierzemy pierwsze lepsze
-    let selectedTrack = tracks.find(t => t.languageCode && t.languageCode.startsWith('pl'));
+    // Szukamy napisów po polsku (ignorując wielkość liter: pl, PL, pl-PL itp.)
+    let selectedTrack = tracks.find(t => t.languageCode && t.languageCode.toLowerCase().startsWith('pl'));
+    
+    // Jeśli nie ma polskiego, szukamy angielskiego, a w ostateczności bierzemy pierwszy z brzegu
     if (!selectedTrack) {
-      selectedTrack = tracks[0];
+      selectedTrack = tracks.find(t => t.languageCode && t.languageCode.toLowerCase().startsWith('en')) || tracks[0];
     }
+
 
     const captionsRes = await fetch(selectedTrack.baseUrl);
     const captionsText = await captionsRes.text();
