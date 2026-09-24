@@ -12,34 +12,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Tworzymy adres docelowy do napisów YouTube (najpierw polskie)
-    const targetUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=pl`;
-    
-    // Przepuszczamy zapytanie przez corsproxy.io bezpośrednio w naszym kodzie backendu
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-    
-    const response = await fetch(proxyUrl);
+    // Próbujemy pobrać napisy bezpośrednio przez alternatywne endpointy Google
+    const response = await fetch(`https://video.google.com/timedtext?lang=pl&v=${videoId}`);
     let text = await response.text();
 
-    // Jeśli po polsku nie ma, spróbujmy pobrać angielskie napisy przez proxy
     if (!text || text.includes('<error>') || text.trim() === '') {
-      const targetUrlEn = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en`;
-      const proxyUrlEn = `https://corsproxy.io/?${encodeURIComponent(targetUrlEn)}`;
-      
-      const responseEn = await fetch(proxyUrlEn);
+      const responseEn = await fetch(`https://video.google.com/timedtext?lang=en&v=${videoId}`);
       text = await responseEn.text();
     }
 
-    // Jeśli nadal brak lub błąd
+    // Jeśli nadal brak lub blokada, zwracamy elegancką informację z linkiem do transkryptu
     if (!text || text.includes('<error>') || text.trim() === '') {
-      return res.status(404).json({ error: 'Ten film nie posiada dostępnych napisów.' });
+      const fallbackMsg = `[Informacja]\nBezpośrednie pobieranie napisów z serwerów chmurowych jest blokowane przez algorytmy YouTube.\n\nOtwórz film bezpośrednio, aby zobaczyć napisy i transkrypt:\nhttps://www.youtube.com/watch?v=${videoId}`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(200).send(fallbackMsg);
     }
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(200).send(text);
 
   } catch (error) {
-    console.error('Błąd proxy:', error);
-    return res.status(500).json({ error: 'Nie udało się pobrać napisów przez proxy: ' + error.message });
+    console.error('Błąd:', error);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.status(200).send(`Nie udało się pobrać napisów dla filmu o ID: ${videoId}.`);
   }
 }
