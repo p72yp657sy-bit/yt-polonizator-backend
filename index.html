@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polski YouTube - Czat i Piosenki</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0d0f18;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #16192b;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            background: linear-gradient(45deg, #ff4e50, #f9d423);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input {
+            background: #23273e;
+            color: #fff;
+            border: 1px solid #32385c;
+        }
+        button {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        #chat-box {
+            height: 200px;
+            background: #0d0f18;
+            border: 1px solid #32385c;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .message { margin-bottom: 8px; }
+        .user { color: #93c5fd; }
+        .bot { color: #86efac; }
+        #result-area {
+            margin-top: 15px;
+            background: #23273e;
+            padding: 10px;
+            border-radius: 8px;
+            min-height: 40px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>POLSKI YOUTUBE</h1>
+    <p style="text-align: center; font-size: 12px; color: #9ca3af;">Wersja 2.3 – Inteligentny Tekst PL</p>
+
+    <!-- Sekcja wyszukiwania piosenek -->
+    <div class="section">
+        <label for="search-input">Wpisz tytuł piosenki lub link:</label>
+        <input type="text" id="search-input" placeholder="np. James Blunt - Goodbye My Lover">
+        <button onclick="searchSong()">Szukaj / Załaduj</button>
+    </div>
+
+    <!-- Wynik / Tekst piosenki -->
+    <div class="section">
+        <div id="result-area">Wybierz utwór lub wpisz link, aby zobaczyć słowa piosenki poniżej.</div>
+    </div>
+
+    <!-- Sekcja czatu z AI -->
+    <div class="section">
+        <label>Porozmawiaj z botem:</label>
+        <div id="chat-box">
+            <div class="message bot">Bot: Cześć! W czym mogę Ci dzisiaj pomóc?</div>
+        </div>
+        <input type="text" id="chat-input" placeholder="Napisz wiadomość...">
+        <button onclick="sendMessage()">Wyślij wiadomość</button>
+    </div>
+</div>
+
+<script>
+    // Funkcja do wyszukiwania piosenek (odpytuje Twój backend na Vercelu)
+    async function searchSong() {
+        const query = document.getElementById('search-input').value;
+        const resultArea = document.getElementById('result-area');
+        
+        if (!query) {
+            alert('Wpisz tytuł piosenki!');
+            return;
+        }
+
+        resultArea.innerHTML = 'Szukam utworu i tekstów...';
+
+        try {
+            // Odpytuje endpoint /api/search oraz /api/lyrics (zgodnie z Twoją strukturą w folderze api/)
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            if(data) {
+                resultArea.innerHTML = `<strong>Znaleziono:</strong> ${JSON.stringify(data)}`;
+            } else {
+                resultArea.innerHTML = 'Nie znaleziono wyników.';
+            }
+        } catch (error) {
+            resultArea.innerHTML = 'Błąd połączenia z backendem: ' + error.message;
+        }
+    }
+
+    // Funkcja do czatu
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box');
+        const text = input.value.trim();
+
+        if (!text) return;
+
+        // Dodaj wiadomość użytkownika do okna czatu
+        chatBox.innerHTML += `<div class="message user">Ty: ${text}</div>`;
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            // Tutaj kierujemy zapytanie do odpowiedniego pliku w folderze api/ (np. dedykowanego endpointu czatu)
+            const response = await fetch('/api/translate', { // lub inny Twój endpoint bota
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await response.json();
+
+            const botReply = data.reply || data.text || "Otrzymano odpowiedź z serwera.";
+            chatBox.innerHTML += `<div class="message bot">Bot: ${botReply}</div>`;
+        } catch (error) {
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd komunikacji z serwerem.</div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
