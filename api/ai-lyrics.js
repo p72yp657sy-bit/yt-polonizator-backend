@@ -17,9 +17,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const prompt = `Podaj pełny tekst piosenki lub transkrypt/napisy dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki lub fragmenty czasowe, jeśli to możliwe.`;
+    const prompt = `Podaj pełny tekst piosenki lub transkrypt dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,6 +45,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Błąd AI:', error);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send('Przepraszam, wystąpił błąd podczas generowania tekstu przez AI: ' + error.message);
+    return res.status(200).send('Błąd AI: ' + error.message);
   }
 }
