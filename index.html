@@ -153,12 +153,11 @@
     </div>
 
     <div class="section">
-        <label style="font-size: 13px; color: #9ca3af;">Porozmawiaj z botem:</label>
+        <label style="font-size: 13px; color: #9ca3af;">Pobieranie napisów:</label>
         <div id="chat-box">
-            <div class="message bot">Bot: Cześć! W czym mogę Ci pomóc?</div>
+            <div class="message bot">Bot: Cześć! Kliknij poniżej, aby pobrać napisy dla wybranego wideo.</div>
         </div>
-        <input type="text" id="chat-input" placeholder="Napisz wiadomość...">
-        <button onclick="sendMessage()">Wyślij wiadomość</button>
+        <button onclick="sendMessage()">Pobierz / Sprawdź napisy</button>
     </div>
 </div>
 
@@ -204,7 +203,6 @@
                     }
                 });
 
-                // Ustaw pierwszy wynik domyślnie
                 const first = results.find(i => i && (i.videoid || i.id || i.videoId));
                 if (first) {
                     selectVideo(first.videoid || first.id || first.videoId, first.author || first.channel || "", first.title || "");
@@ -226,37 +224,26 @@
     }
 
     async function sendMessage() {
-        const input = document.getElementById('chat-input');
         const chatBox = document.getElementById('chat-box');
-        const text = input.value.trim();
 
-        if (!text) return;
-
-        chatBox.innerHTML += `<div class="message user">Ty: ${text}</div>`;
-        input.value = '';
+        chatBox.innerHTML += `<div class="message user">Pobieram napisy dla ID: ${currentVideoId}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Wysyłamy parametry w adresie URL oraz w ciele, aby backend na 100% je przechwycił
-            const url = `/api/translate?videold=${currentVideoId}&videoId=${currentVideoId}&id=${currentVideoId}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    text: text, 
-                    message: text,
-                    videold: currentVideoId,
-                    videoId: currentVideoId,
-                    videoid: currentVideoId,
-                    id: currentVideoId
-                })
-            });
-            const data = await response.json();
+            // Wysyłamy zapytanie metodą GET tak, jak oczekuje tego backend w api/translate.js
+            const response = await fetch(`/api/translate?videoId=${currentVideoId}`);
+            
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Błąd serwera');
+            }
 
-            const botReply = data.reply || data.text || data.translated || data.result || data.message || JSON.stringify(data);
-            chatBox.innerHTML += `<div class="message bot">Bot: ${botReply}</div>`;
+            const subtitlesText = await response.text();
+            // Pokazujemy wycinek pobranych napisów
+            const shortText = subtitlesText.substring(0, 300) + '...';
+            chatBox.innerHTML += `<div class="message bot">Napisy pobrane pomyślnie:<br><small>${shortText}</small></div>`;
         } catch (error) {
-            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd połączenia z serwerem.</div>`;
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: ${error.message}</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
     }
