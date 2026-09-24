@@ -119,7 +119,7 @@
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
     <div class="section">
-        <input type="text" id="search-input" placeholder="np. James Blunt - Goodbye My Lover">
+        <input type="text" id="search-input" placeholder="np. Miley Cyrus - climb">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
     </div>
 
@@ -144,6 +144,8 @@
 </div>
 
 <script>
+    let currentVideoId = "";
+
     async function searchSong() {
         const query = document.getElementById('search-input').value;
         const lyricsArea = document.getElementById('lyrics-area');
@@ -159,7 +161,6 @@
         lyricsArea.innerHTML = 'Szukam utworu...';
 
         try {
-            // Używamy ulepszonego endpointu search-v2
             const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
@@ -167,28 +168,23 @@
             let title = "";
             let author = "";
 
-            // Obsługa różnych struktur danych zwracanych przez backend
             if (data && data.items && data.items.length > 0) {
-                // Szukamy pierwszego elementu, który nie jest ekranem logowania/filtrem
-                const validItem = data.items.find(item => item.videoid && !item.title.includes("Sign in") && !item.title.includes("filters"));
-                const target = validItem || data.items[0];
-                
+                // Bierzemy pierwszy element z listy, który posiada videoid
+                const target = data.items.find(item => item.videoid) || data.items[0];
                 videoId = target.videoid || target.id;
                 title = target.title || "";
                 author = target.author || "";
-            } else if (data && data.videoId) {
-                videoId = data.videoId;
-                title = data.title || "";
             }
 
             if (videoId) {
+                currentVideoId = videoId;
                 youtubeIframe.src = `https://www.youtube.com/embed/${videoId}`;
                 playerContainer.style.display = 'block';
                 statusBar.style.display = 'block';
                 statusBar.innerHTML = `Status: Odtwarzam - ${author} ${title}`;
                 lyricsArea.innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
             } else {
-                lyricsArea.innerHTML = `Nie znaleziono poprawnego wideo. Odpowiedź serwera: <br>` + JSON.stringify(data);
+                lyricsArea.innerHTML = `Nie znaleziono poprawnego wideo.`;
             }
         } catch (error) {
             lyricsArea.innerHTML = 'Błąd wyszukiwania: ' + error.message;
@@ -207,16 +203,19 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Wysyłamy zapytanie do endpointu translate.js
+            // Przekazujemy również currentVideoId, którego wymaga backend
             const response = await fetch('/api/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text, message: text })
+                body: JSON.stringify({ 
+                    text: text, 
+                    message: text,
+                    videoId: currentVideoId 
+                })
             });
             const data = await response.json();
 
-            // Wyciągamy odpowiedź z różnych możliwych pól zwracanych przez backend
-            const botReply = data.reply || data.text || data.translated || data.result || JSON.stringify(data);
+            const botReply = data.reply || data.text || data.translated || data.result || data.message || JSON.stringify(data);
             chatBox.innerHTML += `<div class="message bot">Bot: ${botReply}</div>`;
         } catch (error) {
             chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Błąd połączenia z serwerem.</div>`;
