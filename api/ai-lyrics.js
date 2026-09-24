@@ -11,11 +11,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Brak tytułu utworu' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send('DIAGNOSTYKA: Zmienna GEMINI_API_KEY jest pusta lub niezdefiniowana na Vercelu!');
-  }
+  // Wpisujemy klucz bezpośrednio na sztywno do celów testowych
+  const apiKey = "TUTAJ_WKLEJ_SWOJ_KLUCZ_API";
 
   try {
     const prompt = `Podaj pełny tekst piosenki lub transkrypt dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
@@ -35,8 +32,8 @@ export default async function handler(req, res) {
     const data = await response.json();
     
     if (data.error) {
-      // Zwracamy dokładny komunikat błędu z Google API na ekran!
-      return res.status(200).send(`DIAGNOSTYKA GOOGLE API ERROR: ${JSON.stringify(data.error)}`);
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(200).send(`BŁĄD GOOGLE API: ${JSON.stringify(data.error)}`);
     }
 
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Model zwrócił pustą odpowiedź.';
@@ -46,6 +43,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send('DIAGNOSTYKA CATCH ERROR: ' + error.message);
+    return res.status(200).send('BŁĄD CATCH: ' + error.message);
   }
 }
