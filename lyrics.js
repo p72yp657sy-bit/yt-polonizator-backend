@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     const { query } = req.body;
     
-    if (!title) {
+    if (query) {
         return res.status(400).json({ error: 'Brak parametru title' });
     }
 
