@@ -85,6 +85,26 @@
             font-size: 13px;
             margin-top: 10px;
         }
+        #results-list {
+            margin-top: 8px;
+            max-height: 130px;
+            overflow-y: auto;
+            background: #111322;
+            border: 1px solid #32385c;
+            border-radius: 8px;
+            display: none;
+        }
+        .result-item {
+            padding: 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #23273e;
+            cursor: pointer;
+            color: #cbd5e1;
+        }
+        .result-item:hover {
+            background: #23273e;
+            color: #fff;
+        }
         #chat-box {
             height: 150px;
             background: #0d0f18;
@@ -105,7 +125,7 @@
             border-radius: 8px;
             font-size: 13px;
             color: #d1d5db;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
         }
     </style>
@@ -117,8 +137,9 @@
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL</div>
 
     <div class="section">
-        <input type="text" id="search-input" placeholder="np. Bungee - sam">
+        <input type="text" id="search-input" placeholder="np. Mr Beast">
         <button onclick="searchSong()">Szukaj / Załaduj</button>
+        <div id="results-list"></div>
     </div>
 
     <div id="status-bar">Status: Gotowy do odtwarzania</div>
@@ -142,50 +163,66 @@
 </div>
 
 <script>
-    // Zabezpieczenie domyślnym ID, żeby czat od razu działał
     let currentVideoId = "NG2z0cTZr-g";
 
     async function searchSong() {
         const query = document.getElementById('search-input').value;
         const lyricsArea = document.getElementById('lyrics-area');
-        const youtubeIframe = document.getElementById('youtube-iframe');
-        const statusBar = document.getElementById('status-bar');
+        const resultsList = document.getElementById('results-list');
         
         if (!query) {
-            alert('Wpisz tytuł piosenki!');
+            alert('Wpisz tytuł!');
             return;
         }
 
-        lyricsArea.innerHTML = 'Szukam utworu...';
+        lyricsArea.innerHTML = 'Szukam utworów...';
+        resultsList.style.display = 'none';
+        resultsList.innerHTML = '';
 
         try {
             const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
-            let videoId = null;
-            let title = "";
-            let author = "";
-
             const results = Array.isArray(data) ? data : (data.items || data.results || [data]);
-            const target = results.find(item => item && (item.videoid || item.id || item.videoId));
             
-            if (target) {
-                videoId = target.videoid || target.id || target.videoId;
-                title = target.title || "Utwór";
-                author = target.author || "";
-            }
+            if (results.length > 0) {
+                lyricsArea.innerHTML = `<strong>Znaleziono kilka wyników. Wybierz jeden poniżej:</strong>`;
+                resultsList.style.display = 'block';
 
-            if (videoId) {
-                currentVideoId = videoId;
-                youtubeIframe.src = `https://www.youtube.com/embed/${videoId}`;
-                statusBar.innerHTML = `Status: Odtwarzam - ${author} ${title}`;
-                lyricsArea.innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
+                results.forEach(item => {
+                    if (!item) return;
+                    const vId = item.videoid || item.id || item.videoId;
+                    const vTitle = item.title || "Film bez tytułu";
+                    const vAuthor = item.author || item.channel || "";
+
+                    if (vId) {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.innerText = `${vAuthor} - ${vTitle}`;
+                        div.onclick = () => selectVideo(vId, vAuthor, vTitle);
+                        resultsList.appendChild(div);
+                    }
+                });
+
+                // Automatycznie wybierz pierwszy wynik od razu
+                const first = results.find(i => i && (i.videoid || i.id || i.videoId));
+                if (first) {
+                    selectVideo(first.videoid || first.id || first.videoId, first.author || first.channel || "", first.title || "");
+                }
             } else {
                 lyricsArea.innerHTML = `Nie znaleziono wideo.`;
             }
         } catch (error) {
             lyricsArea.innerHTML = 'Błąd wyszukiwania: ' + error.message;
         }
+    }
+
+    function selectVideo(videoId, author, title) {
+        currentVideoId = videoId;
+        document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${videoId}`;
+        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${author} ${title}`;
+        document.getElementById('lyrics-area').innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
+        document.getElementById('results-list').style.display = 'none';
     }
 
     async function sendMessage() {
@@ -200,13 +237,14 @@
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            // Przesyłamy wszystkie możliwe warianty nazwy pola identyfikatora, które może sprawdzać backend
+            // Uwzględniamy literówkę "videold" z serwera oraz standardowe nazwy
             const response = await fetch('/api/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     text: text, 
                     message: text,
+                    videold: currentVideoId,
                     videoId: currentVideoId,
                     videoid: currentVideoId,
                     id: currentVideoId
