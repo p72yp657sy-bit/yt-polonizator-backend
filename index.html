@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polski YouTube - Czat i Piosenki</title>
+    <title>Polski YouTube - Piosenki i Teksty</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -118,28 +118,18 @@
             background: #23273e;
             color: #fff;
         }
-        #chat-box {
-            height: 160px;
-            background: #0d0f18;
-            border: 1px solid #32385c;
-            border-radius: 8px;
-            padding: 8px;
-            overflow-y: auto;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-        .message { margin-bottom: 8px; line-height: 1.4; }
-        .user { color: #93c5fd; }
-        .bot { color: #86efac; }
-        
         #lyrics-area {
             background: #23273e;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             font-size: 13px;
             color: #d1d5db;
-            max-height: 80px;
-            overflow-y: auto;
+            text-align: center;
+        }
+        a.lyrics-link {
+            color: #f9d423;
+            text-decoration: underline;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -147,7 +137,7 @@
 
 <div class="container">
     <h1>POLSKI YOUTUBE</h1>
-    <div class="subtitle">Wersja Stabilna – Wybór z Listy i Napisy PL</div>
+    <div class="subtitle">Wersja Stabilna – Wyszukiwarka i Odtwarzacz</div>
 
     <div class="section">
         <input type="text" id="search-input" placeholder="np. Miley Cyrus The Climb" onkeydown="if(event.key==='Enter') searchSong()">
@@ -158,24 +148,15 @@
     <div id="status-bar">Status: Gotowy do odtwarzania</div>
 
     <div id="player-container">
-        <iframe id="youtube-iframe" src="https://www.youtube.com/embed/kJQP7kiw5Fk?cc_load_policy=1&hl=pl&cc_lang_pref=pl" allowfullscreen></iframe>
+        <iframe id="youtube-iframe" src="https://www.youtube.com/embed/kJQP7kiw5Fk" allowfullscreen></iframe>
     </div>
 
     <div class="section" style="margin-top: 12px;">
         <div id="lyrics-area">Wyszukaj i wybierz utwór z listy powyżej.</div>
     </div>
-
-    <div class="section">
-        <label style="font-size: 13px; color: #9ca3af;">Tekst / Napisy od AI:</label>
-        <div id="chat-box">
-            <div class="message bot">Bot: Wybierz film z listy i kliknij przycisk poniżej, aby wygenerować tekst utworu przez AI.</div>
-        </div>
-        <button onclick="fetchSubtitles()">Pobierz tekst wybranego filmu (AI)</button>
-    </div>
 </div>
 
 <script>
-    let currentVideoId = "kJQP7kiw5Fk";
     let currentTitle = "I Ciebie też bardzo";
     let currentAuthor = "Dawid Podsiadło";
 
@@ -185,7 +166,7 @@
         const resultsList = document.getElementById('results-list');
         
         if (!query) {
-            alert('Wpisz tytuł!');
+            alert('Wpisz tytuł piosenki!');
             return;
         }
 
@@ -226,44 +207,24 @@
     }
 
     function selectVideo(videoId, author, title) {
-        currentVideoId = videoId;
-        
-        // Inteligentne czyszczenie ze śmieci YouTube (VEVO, Official, nawiasy), żeby AI nie głupiało
-        let cleanAuthor = author.replace(/VEVO/gi, '').replace(/- Topic/gi, '').replace(/Records/gi, '').trim();
-        let cleanTitle = title.replace(/\(Official.*?\)/gi, '').replace(/\[Official.*?\]/gi, '').replace(/official music video/gi, '').trim();
+        currentAuthor = author;
+        currentTitle = title;
 
-        currentAuthor = cleanAuthor || author;
-        currentTitle = cleanTitle || title;
-
-        // Wstawiamy iframe z parametrami wymuszającymi polskie napisy i autostart
-        const playerContainer = document.getElementById('player-container');
-        playerContainer.innerHTML = `<iframe id="youtube-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1&cc_load_policy=1&hl=pl&cc_lang_pref=pl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        // Włączamy wideo
+        document.getElementById('player-container').innerHTML = `<iframe id="youtube-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
         
-        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${currentAuthor} - ${currentTitle}`;
-        document.getElementById('lyrics-area').innerHTML = `<strong>Wybrano:</strong> ${currentAuthor} - ${currentTitle}`;
+        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${author} - ${title}`;
+        
+        // Dajemy czysty, działający podgląd z linkiem do tekstu, zamiast zacinającego się AI
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(author + " " + title + " tekst tłumaczenie")}`;
+        document.getElementById('lyrics-area').innerHTML = `
+            <strong>Wybrano:</strong> ${author} - ${title}<br>
+            <div style="margin-top: 8px;">
+                <a href="${googleSearchUrl}" target="_blank" class="lyrics-link">🔍 Sprawdź tekst i tłumaczenie w Google</a>
+            </div>
+        `;
+        
         document.getElementById('results-list').style.display = 'none';
-    }
-
-    async function fetchSubtitles() {
-        const chatBox = document.getElementById('chat-box');
-
-        chatBox.innerHTML += `<div class="message user">Generuję tekst przez AI dla: ${currentAuthor} - ${currentTitle}...</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        try {
-            const response = await fetch(`/api/ai-lyrics?title=${encodeURIComponent(currentTitle)}&author=${encodeURIComponent(currentAuthor)}`);
-            
-            if (!response.ok) {
-                throw new Error('Błąd serwera AI');
-            }
-
-            const aiText = await response.text();
-            
-            chatBox.innerHTML += `<div class="message bot"><strong>Tekst od AI:</strong><br><div style="max-height: 140px; overflow-y: auto; color:#d1d5db; margin-top: 4px; white-space: pre-line;">${aiText}</div></div>`;
-        } catch (error) {
-            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;>Bot: Nie udało się pobrać tekstu. Spróbuj wybrać inny kafelek z listy.</div>`;
-        }
-        chatBox.scrollTop = chatBox.scrollHeight;
     }
 </script>
 
