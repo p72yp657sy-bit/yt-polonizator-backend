@@ -3,323 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLSKI YOUTUBE (Chat 3.1 - Nasłuch AI)</title>
+    <title>Polski YouTube - Czat i Piosenki</title>
     <style>
-        * { box-sizing: border-box; }
-        body { 
-            background: #09090b; 
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-                linear-gradient(to bottom, #09090b, #18181b);
-            color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0d0f18;
+            color: #ffffff;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .brand-header {
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: #16192b;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        h1 {
             text-align: center;
-            padding: 20px 10px;
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        }
-        .brand-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
-        }
-        .brand-title {
-            font-size: 30px;
-            font-weight: 900;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #ff2a85, #ff7e5f, #feb47b);
+            font-size: 20px;
+            margin: 0;
+            background: linear-gradient(45deg, #ff4e50, #f9d423);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin: 0;
-            text-transform: uppercase;
         }
-        .brand-subtitle {
-            font-size: 12px;
-            color: #a1a1aa;
-            margin-top: 6px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
+        .subtitle {
+            text-align: center;
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 15px;
         }
-
-        .input-group { display: flex; gap: 8px; }
-        input { 
-            flex: 1; 
-            padding: 14px 16px; 
-            border-radius: 10px; 
-            border: 1px solid #27272a; 
-            background: #121214; 
-            color: #fff; 
-            font-size: 15px;
-            outline: none;
-            transition: all 0.2s;
+        .section {
+            margin-bottom: 14px;
         }
-        input:focus { border-color: #ec4899; box-shadow: 0 0 12px rgba(236, 72, 153, 0.2); }
-        
-        button { 
-            padding: 14px 22px; 
-            border-radius: 10px; 
-            border: none; 
-            background: linear-gradient(135deg, #ec4899, #8b5cf6); 
-            color: #fff; 
-            font-weight: bold; 
-            font-size: 15px;
-            cursor: pointer; 
-            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
-        }
-        button:active { transform: scale(0.97); }
-
-        #results-container {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            background: #121214;
-            border: 1px solid #27272a;
-            border-radius: 10px;
+        input, button {
+            width: 100%;
             padding: 10px;
-            max-height: 260px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input {
+            background: #23273e;
+            color: #fff;
+            border: 1px solid #32385c;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: #a855f7;
+        }
+        button {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        
+        #player-container {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #32385c;
+        }
+        #youtube-iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+        }
+        #status-bar {
+            background: #143821;
+            color: #4ade80;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        #results-list {
+            margin-top: 8px;
+            max-height: 180px;
             overflow-y: auto;
+            background: #111322;
+            border: 1px solid #32385c;
+            border-radius: 8px;
+            display: none;
         }
         .result-item {
-            padding: 12px;
-            background: #18181b;
-            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            border-bottom: 1px solid #23273e;
             cursor: pointer;
-            font-size: 14px;
-            color: #e4e4e7;
-            border: 1px solid #27272a;
+            color: #cbd5e1;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
+            gap: 8px;
         }
-        .result-item:hover { border-color: #ec4899; background: #27272a; color: #fff; }
-
-        .player-container { 
-            position: relative; 
-            width: 100%; 
-            padding-bottom: 56.25%; 
-            height: 0; 
-            background: #000; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: 1px solid #27272a;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        .result-item:hover {
+            background: #23273e;
+            color: #fff;
         }
-        .player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        
-        #status { 
-            padding: 12px; 
-            text-align: center; 
-            font-weight: 600; 
-            font-size: 14px;
-            border-radius: 10px; 
-            background: #143821; 
-            border: 1px solid #27272a;
-            color: #4ade80;
-        }
-        
-        #subtitle-box { 
-            padding: 20px; 
-            background: #121214; 
-            border-radius: 12px; 
-            max-height: 220px;
+        #chat-box {
+            height: 160px;
+            background: #0d0f18;
+            border: 1px solid #32385c;
+            border-radius: 8px;
+            padding: 8px;
             overflow-y: auto;
-            text-align: center; 
-            font-size: 16px; 
-            font-weight: 500; 
-            color: #facc15; 
-            border: 2px solid #3f3f46; 
-            box-shadow: inset 0 2px 15px rgba(0,0,0,0.9), 0 6px 25px rgba(0,0,0,0.4);
-            line-height: 1.5;
-            white-space: pre-line;
-            word-break: break-word;
+            margin-bottom: 8px;
+            font-size: 12px;
         }
+        .message { margin-bottom: 8px; line-height: 1.4; }
+        .user { color: #93c5fd; }
+        .bot { color: #86efac; }
         
-        .nav-link { text-align: center; margin-top: 10px; font-size: 13px; display: flex; justify-content: center; gap: 20px; }
-        .nav-link a { color: #71717a; text-decoration: none; }
-        .nav-link a:hover { color: #f43f5e; }
+        #lyrics-area {
+            background: #23273e;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #d1d5db;
+            max-height: 80px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="brand-header">
-            <h1 class="brand-title">Polski YouTube</h1>
-            <div class="brand-subtitle">Wersja 3.1 – Nasłuch AI w Przeglądarce</div>
-        </div>
-        
-        <div class="input-group">
-            <input type="text" id="search-input" placeholder="Wpisz tytuł piosenki..." onkeydown="if(event.key==='Enter') searchSongs()">
-            <button onclick="searchSongs()">Szukaj</button>
-        </div>
 
-        <div id="results-container"></div>
+<div class="container">
+    <h1>POLSKI YOUTUBE</h1>
+    <div class="subtitle">Wersja 3.1 & 2.3 – Kafelki i Stabilny Backend</div>
 
-        <div class="input-group">
-            <input type="text" id="url-input" placeholder="Lub wklej link YouTube...">
-            <button onclick="loadVideoFromInput()" style="background: #27272a;">Załaduj</button>
-        </div>
-
-        <div class="input-group">
-            <button onclick="startListening()" style="background: #10b981; flex: 1;">🎙️ Włącz Nasłuch</button>
-            <button onclick="translateTranscript()" style="background: #3b82f6; flex: 1;">🌐 Przetłumacz PL</button>
-        </div>
-
-        <div class="player-container">
-            <iframe id="youtube-iframe" src="https://www.youtube.com/embed/wVyggTKDcOE?autoplay=0&cc_load_policy=1&hl=pl&cc_lang_pref=pl" allowfullscreen></iframe>
-        </div>
-        
-        <div id="status">Status: Gotowy do nasłuchu</div>
-        <div id="subtitle-box">Kliknij „Włącz Nasłuch”, aby przeglądarka zaczęła pisać słyszoną mowę, a potem „Przetłumacz PL”.</div>
-
-        <div class="nav-link">
-            <a href="chat-2.html">← Wróć do wersji 2.3</a>
-            <a href="reader.html">Wersja klasyczna →</a>
-        </div>
+    <div class="section">
+        <input type="text" id="search-input" placeholder="np. Dawid Podsiadło" onkeydown="if(event.key==='Enter') searchSong()">
+        <button onclick="searchSong()">Szukaj / Załaduj</button>
+        <div id="results-list"></div>
     </div>
 
-    <script>
-        let recognition;
-        let rawTranscript = "";
+    <div id="status-bar">Status: Gotowy do odtwarzania</div>
 
-        function extractVideoId(input) {
-            if (!input) return null;
-            input = input.trim();
-            if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = input.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
+    <div id="player-container">
+        <iframe id="youtube-iframe" src="https://www.youtube.com/embed/kJQP7kiw5Fk" allowfullscreen></iframe>
+    </div>
+
+    <div class="section" style="margin-top: 12px;">
+        <div id="lyrics-area">Wyszukaj utwór, aby go odtworzyć.</div>
+    </div>
+
+    <div class="section">
+        <label style="font-size: 13px; color: #9ca3af;">Tekst / Napisy od AI:</label>
+        <div id="chat-box">
+            <div class="message bot">Bot: Wybierz film z listy i kliknij przycisk poniżej, aby wygenerować tekst utworu przez AI.</div>
+        </div>
+        <button onclick="fetchSubtitles()">Pobierz tekst wybranego filmu (AI)</button>
+    </div>
+</div>
+
+<script>
+    let currentVideoId = "kJQP7kiw5Fk";
+    let currentTitle = "I Ciebie też bardzo";
+    let currentAuthor = "Dawid Podsiadło";
+
+    function extractVideoId(input) {
+        if (!input) return null;
+        input = input.trim();
+        if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = input.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    async function searchSong() {
+        const query = document.getElementById('search-input').value.trim();
+        const lyricsArea = document.getElementById('lyrics-area');
+        const resultsList = document.getElementById('results-list');
+        
+        if (!query) {
+            alert('Wpisz tytuł!');
+            return;
         }
 
-        function loadVideo(videoId) {
-            if (!videoId) return;
-            const playerContainer = document.querySelector('.player-container');
-            playerContainer.innerHTML = `<iframe id="youtube-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1&cc_load_policy=1&hl=pl&cc_lang_pref=pl" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-            document.getElementById('status').innerText = 'Status: Odtwarzacz aktywny z polskimi napisami';
-            document.getElementById('subtitle-box').innerText = 'Napisy YouTube zostały włączone automatycznie w języku polskim.';
+        const directId = extractVideoId(query);
+        if (directId) {
+            selectVideo(directId, "Bezpośredni link", "Film YouTube");
+            return;
         }
 
-        function loadVideoFromInput() {
-            const val = document.getElementById('url-input').value;
-            const videoId = extractVideoId(val);
-            if (!videoId) {
-                alert('Wpisz poprawny link lub identyfikator YouTube!');
-                return;
-            }
-            document.getElementById('results-container').style.display = 'none';
-            loadVideo(videoId);
-        }
+        lyricsArea.innerHTML = 'Szukam utworów...';
+        resultsList.style.display = 'none';
+        resultsList.innerHTML = '';
 
-        async function searchSongs() {
-            const query = document.getElementById('search-input').value.trim();
-            if (!query) return;
+        try {
+            const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            const results = data.items || (Array.isArray(data) ? data : []);
+            
+            if (results.length > 0) {
+                lyricsArea.innerHTML = `<strong>Wybierz wersję z kafelków poniżej:</strong>`;
+                resultsList.style.display = 'block';
 
-            const directId = extractVideoId(query);
-            if (directId) {
-                loadVideo(directId);
-                return;
-            }
-
-            document.getElementById('status').innerText = `Szukanie "${query}"...`;
-            const resultsBox = document.getElementById('results-container');
-            resultsBox.style.display = 'flex';
-            resultsBox.innerHTML = '<div class="result-item" style="justify-content:center; color:#a1a1aa;">Przeszukiwanie bazy utworów...</div>';
-
-            try {
-                const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                
-                const results = data.items || (Array.isArray(data) ? data : []);
-                if (results.length === 0) {
-                    throw new Error('Brak wyników');
-                }
-
-                resultsBox.innerHTML = '';
-                results.slice(0, 5).forEach(vid => {
-                    const vId = vid.videoId || vid.videoid || vid.id;
-                    const vTitle = vid.title || "Film bez tytułu";
-                    const vAuthor = vid.author || "";
+                results.slice(0, 6).forEach(item => {
+                    if (!item) return;
+                    const vId = item.videoId || item.videoid || item.id;
+                    const vTitle = item.title || "Film bez tytułu";
+                    const vAuthor = item.author || "";
 
                     if (vId) {
                         const div = document.createElement('div');
                         div.className = 'result-item';
-                        div.innerHTML = `🎵 <b>${vTitle}</b> <span style="color:#71717a; font-size:12px;">(${vAuthor})</span>`;
-                        
-                        div.onclick = () => {
-                            resultsBox.style.display = 'none';
-                            document.getElementById('url-input').value = `https://youtu.be/${vId}`;
-                            loadVideo(vId);
-                        };
-                        resultsBox.appendChild(div);
+                        div.innerHTML = `🎵 <b>${vAuthor}</b> - ${vTitle}`;
+                        div.onclick = () => selectVideo(vId, vAuthor, vTitle);
+                        resultsList.appendChild(div);
                     }
                 });
 
-                document.getElementById('status').innerText = 'Wybierz utwór z listy:';
-            } catch (err) {
-                resultsBox.innerHTML = `<div class="result-item" style="color:#f43f5e; justify-content:center; text-align:center;">Błąd wyszukiwania. Wklej link bezpośredni.</div>`;
-                document.getElementById('status').innerText = 'Wprowadź link bezpośredni poniżej:';
-            }
-        }
-
-        function startListening() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Twoja przeglądarka nie wspiera funkcji rozpoznawania mowy.");
-                return;
-            }
-
-            recognition = new SpeechRecognition();
-            recognition.lang = 'en-US';
-            recognition.continuous = true;
-            recognition.interimResults = true;
-
-            const subtitleBox = document.getElementById('subtitle-box');
-            document.getElementById('status').innerText = 'Status: Nasłuchiwanie mowy...';
-
-            recognition.onresult = function(event) {
-                let interimTranscript = '';
-                rawTranscript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isField) { // safe fallback
-                        rawTranscript += event.results[i][0].transcript + ' ';
-                    } else if (event.results[i].isFinal) {
-                        rawTranscript += event.results[i][0].transcript + ' ';
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
+                // Automatycznie wybierz pierwszy film z listy
+                const first = results[0];
+                if (first && (first.videoId || first.videoid)) {
+                    selectVideo(first.videoId || first.videoid, first.author || "", first.title || "");
                 }
-                subtitleBox.innerText = rawTranscript + interimTranscript;
-            };
-
-            recognition.start();
-        }
-
-        function translateTranscript() {
-            if (!rawTranscript) {
-                alert("Najpierw włącz nasłuch i poczekaj na zebranie tekstu!");
-                return;
+            } else {
+                lyricsArea.innerHTML = `Nie znaleziono wideo.`;
             }
-            document.getElementById('status').innerText = 'Status: Przetłumaczono na polski';
-            document.getElementById('subtitle-box').innerHTML = `<span style="color:#38bdf8;">[Tłumaczenie PL]:</span><br>${rawTranscript}`;
+        } catch (error) {
+            lyricsArea.innerHTML = 'Błąd wyszukiwania: ' + error.message;
         }
-    </script>
+    }
+
+    function selectVideo(videoId, author, title) {
+        currentVideoId = videoId;
+        currentAuthor = author;
+        currentTitle = title;
+        document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${videoId}`;
+        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${author} ${title}`;
+        document.getElementById('lyrics-area').innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
+        document.getElementById('results-list').style.display = 'none';
+    }
+
+    async function fetchSubtitles() {
+        const chatBox = document.getElementById('chat-box');
+
+        chatBox.innerHTML += `<div class="message user">Generuję tekst przez AI dla: ${currentAuthor} - ${currentTitle}...</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await fetch(`/api/ai-lyrics?title=${encodeURIComponent(currentTitle)}&author=${encodeURIComponent(currentAuthor)}`);
+            
+            if (!response.ok) {
+                throw new Error('Błąd serwera AI');
+            }
+
+            const aiText = await response.text();
+            
+            chatBox.innerHTML += `<div class="message bot"><strong>Tekst od AI:</strong><br><div style="max-height: 140px; overflow-y: auto; color:#d1d5db; margin-top: 4px; white-space: pre-line;">${aiText}</div></div>`;
+        } catch (error) {
+            chatBox.innerHTML += `<div class="message bot" style="color:#f87171;">Bot: Nie udało się pobrać tekstu od AI.</div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
 </body>
 </html>
