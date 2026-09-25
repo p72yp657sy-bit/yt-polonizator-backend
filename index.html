@@ -54,10 +54,6 @@
             background: #23273e;
             color: #fff;
             border: 1px solid #32385c;
-            outline: none;
-        }
-        input:focus {
-            border-color: #a855f7;
         }
         button {
             background: linear-gradient(135deg, #a855f7, #6366f1);
@@ -91,7 +87,7 @@
         }
         #results-list {
             margin-top: 8px;
-            max-height: 180px;
+            max-height: 140px;
             overflow-y: auto;
             background: #111322;
             border: 1px solid #32385c;
@@ -99,14 +95,11 @@
             display: none;
         }
         .result-item {
-            padding: 10px;
+            padding: 9px;
             font-size: 12px;
             border-bottom: 1px solid #23273e;
             cursor: pointer;
             color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         .result-item:hover {
             background: #23273e;
@@ -144,8 +137,8 @@
     <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL (AI)</div>
 
     <div class="section">
-        <input type="text" id="search-input" placeholder="np. Dawid Podsiadło" onkeydown="if(event.key==='Enter') searchSong()">
-        <button onclick="searchSong()">Szukaj utworów</button>
+        <input type="text" id="search-input" placeholder="np. Dawid Podsiadło">
+        <button onclick="searchSong()">Szukaj / Załaduj</button>
         <div id="results-list"></div>
     </div>
 
@@ -156,7 +149,7 @@
     </div>
 
     <div class="section" style="margin-top: 12px;">
-        <div id="lyrics-area">Wyszukaj i wybierz utwór z listy powyżej.</div>
+        <div id="lyrics-area">Wyszukaj utwór, aby go odtworzyć.</div>
     </div>
 
     <div class="section">
@@ -174,7 +167,7 @@
     let currentAuthor = "Dawid Podsiadło";
 
     async function searchSong() {
-        const query = document.getElementById('search-input').value.trim();
+        const query = document.getElementById('search-input').value;
         const lyricsArea = document.getElementById('lyrics-area');
         const resultsList = document.getElementById('results-list');
         
@@ -194,10 +187,10 @@
             const results = data.items || (Array.isArray(data) ? data : []);
             
             if (results.length > 0) {
-                lyricsArea.innerHTML = `<strong>Wybierz właściwą wersję z listy poniżej:</strong>`;
+                lyricsArea.innerHTML = `<strong>Wybierz wersję z listy poniżej:</strong>`;
                 resultsList.style.display = 'block';
 
-                results.slice(0, 6).forEach(item => {
+                results.forEach(item => {
                     if (!item) return;
                     const vId = item.videoId || item.videoid || item.id;
                     const vTitle = item.title || "Film bez tytułu";
@@ -206,11 +199,17 @@
                     if (vId) {
                         const div = document.createElement('div');
                         div.className = 'result-item';
-                        div.innerHTML = `🎵 <b>${vAuthor}</b> - ${vTitle}`;
+                        div.innerText = `${vAuthor} - ${vTitle}`;
                         div.onclick = () => selectVideo(vId, vAuthor, vTitle);
                         resultsList.appendChild(div);
                     }
                 });
+
+                // Automatycznie wybierz pierwszy film z listy
+                const first = results[0];
+                if (first && (first.videoId || first.videoid)) {
+                    selectVideo(first.videoId || first.videoid, first.author || "", first.title || "");
+                }
             } else {
                 lyricsArea.innerHTML = `Nie znaleziono wideo.`;
             }
