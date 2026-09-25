@@ -11,13 +11,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Brak tytułu utworu' });
   }
 
-  const apiKey = "TUTAJ_WKLEJ_SWOJ_KLUCZ_AQ";
+  // Pobieranie klucza bezpiecznie ze zmiennej środowiskowej Vercela
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).send('BŁĄD: Brak skonfigurowanego klucza GEMINI_API_KEY w zmiennych środowiskowych Vercela.');
+  }
 
   try {
-    const prompt = `Podaj pełny tekst piosenki dla utworu: "${author ? author + ' - ' : ''}${title}". Odpowiedz po polsku, w czytelnej formie z podziałem na zwrotki.`;
+    const prompt = `Podaj pełny tekst piosenki oraz jego polskie tłumaczenie dla utworu: "${author ? author + ' - ' : ''}${title}". Podziel odpowiedź czytelnie na oryginalny tekst oraz tłumaczenie.`;
 
-    // Próbujemy przekazać klucz AQ jako x-goog-api-key w parametrze URL lub nagłówku
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
