@@ -97,12 +97,12 @@
         }
         #results-list {
             margin-top: 8px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
             background: #111322;
             border: 1px solid #32385c;
             border-radius: 8px;
-            display: none;
+            display: none; /* Pokazuje się po wyszukaniu */
         }
         .result-item {
             padding: 10px;
@@ -137,11 +137,12 @@
 
 <div class="container">
     <h1>POLSKI YOUTUBE</h1>
-    <div class="subtitle">Wersja Stabilna – Wyszukiwarka i Odtwarzacz</div>
+    <div class="subtitle">Wersja Stabilna – Wybór z Listy</div>
 
     <div class="section">
         <input type="text" id="search-input" placeholder="np. Miley Cyrus The Climb" onkeydown="if(event.key==='Enter') searchSong()">
         <button onclick="searchSong()">Szukaj utworów</button>
+        <!-- Tutaj jest kontener na listę kafelków -->
         <div id="results-list"></div>
     </div>
 
@@ -157,9 +158,6 @@
 </div>
 
 <script>
-    let currentTitle = "I Ciebie też bardzo";
-    let currentAuthor = "Dawid Podsiadło";
-
     async function searchSong() {
         const query = document.getElementById('search-input').value.trim();
         const lyricsArea = document.getElementById('lyrics-area');
@@ -178,13 +176,14 @@
             const response = await fetch(`/api/search-v2?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
+            // Obsługa różnych formatów odpowiedzi z API
             const results = data.items || (Array.isArray(data) ? data : []);
             
             if (results.length > 0) {
                 lyricsArea.innerHTML = `<strong>Wybierz właściwą wersję z listy poniżej:</strong>`;
-                resultsList.style.display = 'block';
+                resultsList.style.display = 'block'; // Odkrywamy listę
 
-                results.slice(0, 6).forEach(item => {
+                results.slice(0, 8).forEach(item => {
                     if (!item) return;
                     const vId = item.videoId || item.videoid || item.id;
                     const vTitle = item.title || "Film bez tytułu";
@@ -207,15 +206,11 @@
     }
 
     function selectVideo(videoId, author, title) {
-        currentAuthor = author;
-        currentTitle = title;
-
-        // Włączamy wideo
+        // Włączamy wybrane wideo w odtwarzaczu
         document.getElementById('player-container').innerHTML = `<iframe id="youtube-iframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
         
         document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${author} - ${title}`;
         
-        // Dajemy czysty, działający podgląd z linkiem do tekstu, zamiast zacinającego się AI
         const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(author + " " + title + " tekst tłumaczenie")}`;
         document.getElementById('lyrics-area').innerHTML = `
             <strong>Wybrano:</strong> ${author} - ${title}<br>
@@ -224,6 +219,7 @@
             </div>
         `;
         
+        // Chowamy listę po wybraniu utworu, żeby nie zasłaniała ekranu
         document.getElementById('results-list').style.display = 'none';
     }
 </script>
