@@ -220,11 +220,17 @@
 
     function selectVideo(videoId, author, title) {
         currentVideoId = videoId;
-        currentAuthor = author;
-        currentTitle = title;
+        
+        // Czyszczenie ze śmieci z YouTube, żeby AI nie łapało błędów
+        let cleanAuthor = author.replace(/VEVO/gi, '').replace(/- Topic/gi, '').trim();
+        let cleanTitle = title.replace(/\(Official.*?\)/gi, '').replace(/\[Official.*?\]/gi, '').replace(/official music video/gi, '').trim();
+
+        currentAuthor = cleanAuthor || author;
+        currentTitle = cleanTitle || title;
+
         document.getElementById('youtube-iframe').src = `https://www.youtube.com/embed/${videoId}`;
-        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${author} ${title}`;
-        document.getElementById('lyrics-area').innerHTML = `<strong>Wybrano:</strong> ${author} - ${title}`;
+        document.getElementById('status-bar').innerHTML = `Status: Odtwarzam - ${currentAuthor} - ${currentTitle}`;
+        document.getElementById('lyrics-area').innerHTML = `<strong>Wybrano:</strong> ${currentAuthor} - ${currentTitle}`;
         document.getElementById('results-list').style.display = 'none';
     }
 
