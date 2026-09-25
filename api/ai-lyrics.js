@@ -37,7 +37,7 @@ export default async function handler(req, res) {
                 messages: [
                     {
                         role: "system",
-                        content: `Jesteś inteligentnym asystentem AI w aplikacji muzycznej. Użytkownik słucha utworu: "${author || 'Nieznany'} - ${title || 'Nieznany'}". Odpowiadaj naturalnie i po polsku.`
+                        content: `Jesteś miłym, wszechstronnym asystentem AI. Odpowiadaj na pytania użytkownika w naturalny sposób, pomagaj mu w codziennych sprawach i prowadź konwersację po polsku. Jeśli użytkownik poprosi Cię o włączenie jakiejś piosenki lub utworu muzycznego, w swojej odpowiedzi uwzględnij jasną komendę w formacie: WŁĄCZ: [Tytuł i Wykonawca], aby system mógł ją odtworzyć."
                     },
                     {
                         role: "user",
