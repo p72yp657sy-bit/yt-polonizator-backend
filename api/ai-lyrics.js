@@ -28,7 +28,8 @@ export default async function handler(req, res) {
                 "Authorization": `Bearer ${apiKey.trim()}`
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
+                model: "gemma2-9b-it",
+
 
 
 
