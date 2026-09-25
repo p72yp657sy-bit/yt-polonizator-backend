@@ -13,46 +13,42 @@ export default async function handler(req, res) {
         return res.status(400).send("Brak zapytania.");
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // Jeśli klucz OpenAI nie jest skonfigurowany, asystent odpowie inteligentnym fallbackiem,
-    // żeby aplikacja działała bezbłędnie pod każdym adresem.
     if (!apiKey) {
-        return res.status(200).send(`Oto odpowiedź na Twoje pytanie: "${prompt}". (Aktualnie słuchasz: ${author} - ${title}). Aby odblokować pełną inteligencję ChatGPT, dodaj klucz OPENAI_API_KEY w ustawieniach Vercela.`);
+        return res.status(200).send(`Oto odpowiedź: "${prompt}". (Brak skonfigurowanego klucza GEMINI_API_KEY w Vercelu).`);
     }
 
     try {
-        const openAiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [
+                contents: [
                     {
-                        role: "system",
-                        content: `Jesteś miłym asystentem AI w aplikacji muzycznej z polskim YouTube. Użytkownik słucha utworu: "${author} - ${title}". Odpowiadaj na pytania wprost, po polsku.`
-                    },
-                    {
-                        role: "user",
-                        content: prompt
+                        parts: [
+                            {
+                                text: `Jesteś miłym asystentem AI w aplikacji muzycznej z polskim YouTube. Użytkownik słucha utworu: "${author} - ${title}". Odpowiadaj na pytania wprost, po polsku.\n\nPytanie użytkownika: ${prompt}`
+                            }
+                        ]
                     }
-                ],
-                max_tokens: 400
+                ]
             })
         });
 
-        const data = await openAiRes.json();
+        const data = await geminiRes.json();
         
-        if (data.choices && data.choices.length > 0) {
-            return res.status(200).send(data.choices[0].message.content);
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+            return res.status(200).send(data.candidates[0].content.parts[0].text);
         } else {
-            return res.status(200).send("Nie udało się uzyskać odpowiedzi od modelu AI.");
+            console.error("Gemini Error:", data);
+            return res.status(200).send("Nie udało się uzyskać odpowiedzi od modelu Gemini.");
         }
 
     } catch (error) {
-        return res.status(200).send("Wystąpił błąd podczas komunikacji z API OpenAI.");
+        console.error("Fetch Error:", error);
+        return res.status(200).send("Wystąpił błąd podczas komunikacji z API Gemini.");
     }
 }
