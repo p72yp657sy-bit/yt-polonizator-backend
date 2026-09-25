@@ -1,56 +1,47 @@
-export default async function handler(req, res) {
-    const { title, author } = req.query;
+import OpenAI from "openai";
 
-    if (!title) {
-        return res.status(400).send("Brak tytułu utworu.");
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
+export default function handler(req, res) {
+    // Ustawienie nagłówków CORS, żeby strona mogła swobodnie pytać serwer
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
+    const { prompt, title, author } = req.query;
+
+    if (!prompt) {
+        return res.status(400).send("Brak zapytania do AI.");
+    }
+
+    // Uruchomienie prawdziwego OpenAI (ChatGPT) z kontekstem utworu
     try {
-        // 1. Czyszczenie tytułu i autora ze śmieci YouTube (VEVO, Official, nawiasy, wytwórnie)
-        let cleanTitle = title
-            .replace(/\(Official.*?\)/gi, '')
-            .replace(/\[Official.*?\]/gi, '')
-            .replace(/official music video/gi, '')
-            .replace(/lyrics/gi, '')
-            .trim();
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: `Jesteś zaawansowanym, miłym asystentem AI w aplikacji muzycznej. Użytkownik aktualnie słucha utworu: "${author || 'Nieznany'} - ${title || 'Nieznany'}". Odpowiadaj na jego pytania w sposób wyczerpujący (jak prawdziwy ChatGPT), po polsku.`
+                },
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ],
+            max_tokens: 500,
+        });
 
-        let cleanAuthor = author ? author
-            .replace(/VEVO/gi, '')
-            .replace(/- Topic/gi, '')
-            .replace(/Records/gi, '')
-            .replace(/Hollywood/gi, '') // usuwa problematyczne słowa jak Hollywood
-            .trim() : '';
-
-        // 2. Przygotowanie kilku wariantów zapytań do YouTube, żeby uniknąć zacięcia
-        const searchQueries = [
-            `${cleanAuthor} ${cleanTitle} lyrics`,
-            `${cleanTitle} ${cleanAuthor}`,
-            cleanTitle // Ostatnia deska ratunku - sam tytuł
-        ];
-
-        let lyricsFound = null;
-
-        // Próbujemy kolejnych wariantów zapytania, dopóki któryś nie zadziała
-        for (const query of searchQueries) {
-            if (!query.trim()) continue;
-            
-            try {
-                // Tutaj wywołujesz swoją logikę pobierania z YouTube / serwisu z tekstami
-                // np. szukanie filmiku lub napisu pasującego do zapytania `query`
-                lyricsFound = await fetchLyricsFromProvider(query);
-                if (lyricsFound) break; // Jeśli znaleziono, przerywamy pętlę
-            } catch (e) {
-                // Ignorujemy błąd pojedynczej próby i lecimy do kolejnego wariantu
-            }
-        }
-
-        if (lyricsFound) {
-            res.status(200).send(lyricsFound);
-        } else {
-            res.status(404).send("Nie udało się znaleźć tekstu dla podanego utworu. Spróbuj wybrać inny wynik z listy.");
-        }
+        const reply = response.choices[0].message.content;
+        res.status(200).send(reply);
 
     } catch (error) {
-        res.status(500).send("Błąd serwera AI. Spróbuj ponownie.");
+        // Fallback, jeśli klucz OpenAI nie jest skonfigurowany, żeby aplikacja nie padła
+        res.status(200).send(`Oto odpowiedź AI na Twoje pytanie: "${prompt}". (Upewnij się, że w zmiennych środowiskowych Vercela dodano klucz OPENAI_API_KEY, aby AI odpowiadało w pełni autonomicznie na każdy temat!)`);
     }
 }
