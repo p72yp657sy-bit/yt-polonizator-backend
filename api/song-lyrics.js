@@ -9,14 +9,13 @@ export default async function handler(req, res) {
 
     const { title, author } = req.query;
 
-    if (!title || !author) {
-        return res.status(400).send("Brak tytułu lub autora utworu.");
+    if (!title || title === "Nieznany") {
+        return res.status(200).send("Nie wybrano jeszcze żadnego utworu do odtworzenia.");
     }
 
     const apiKey = process.env.GROQ_API_KEY;
-
     if (!apiKey) {
-        return res.status(200).send("Błąd: Brak klucza GROQ_API_KEY w zmiennych środowiskowych Vercela.");
+        return res.status(200).send("Błąd: Brak klucza GROQ_API_KEY na Vercelu.");
     }
 
     try {
@@ -27,30 +26,32 @@ export default async function handler(req, res) {
                 "Authorization": `Bearer ${apiKey.trim()}`
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "llama-3.1-8b-instant",
                 messages: [
                     {
                         role: "system",
-                        content: "Jesteś asystentem muzycznym. Podaj pełny tekst podanej piosenki po polsku lub w oryginale. Jeśli nie znasz dokładnego tekstu, napisz zwrotki, które pamiętasz, lub informację o jego braku. Formatuj tekst przejrzyście."
+                        content: "Jesteś asystentem muzycznym. Podaj pełny tekst podanej piosenki. Jeśli nie znasz dokładnego tekstu, napisz zwrotki, które znasz, lub informację o braku tekstu."
                     },
                     {
                         role: "user",
                         content: `Podaj tekst piosenki: ${author} - ${title}`
                     }
                 ],
-                max_tokens: 1000
+                max_tokens: 800
             })
         });
 
         const data = await groqRes.json();
         
-        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        if (data.choices && data.choices[0]?.message?.content) {
             return res.status(200).send(data.choices[0].message.content);
+        } else if (data.error) {
+            return res.status(200).send(`Błąd Groq: ${data.error.message}`);
         } else {
-            return res.status(200).send("Nie udało się pobrać tekstu tej piosenki.");
+            return res.status(200).send("Nie udało się odczytać tekstu.");
         }
 
     } catch (error) {
-        return res.status(200).send("Wystąpił błąd techniczny podczas pobierania tekstu.");
+        return res.status(200).send("Błąd techniczny połączenia z API.");
     }
 }
