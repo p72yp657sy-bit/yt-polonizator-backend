@@ -3,11 +3,31 @@
   "routes": [
     {
       "src": "/api/captions",
-      "dest": "/api/captions.js"
+      "dest": "/api/lib/captions.js"
     },
     {
       "src": "/api/lyrics",
-      "dest": "/api/lyrics.js"
+      "dest": "/api/lib/lyrics.js"
+    },
+    {
+      "src": "/api/ai-lyrics",
+      "dest": "/api/lib/ai-lyrics.js"
+    },
+    {
+      "src": "/api/search",
+      "dest": "/api/lib/search.js"
+    },
+    {
+      "src": "/api/search-v2",
+      "dest": "/api/lib/search-v2.js"
+    },
+    {
+      "src": "/api/suggest",
+      "dest": "/api/lib/suggest.js"
+    },
+    {
+      "src": "/api/translate",
+      "dest": "/api/lib/translate.js"
     }
   ]
 }
