@@ -1,51 +1,56 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    const { title, author } = req.query;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  const { title, author } = req.query;
-  if (!title) {
-    return res.status(400).json({ error: 'Brak tytułu utworu' });
-  }
-
-  // Pobieranie klucza bezpiecznie ze zmiennej środowiskowej Vercela
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).send('BŁĄD: Brak skonfigurowanego klucza GEMINI_API_KEY w zmiennych środowiskowych Vercela.');
-  }
-
-  try {
-    const prompt = `Podaj pełny tekst piosenki oraz jego polskie tłumaczenie dla utworu: "${author ? author + ' - ' : ''}${title}". Podziel odpowiedź czytelnie na oryginalny tekst oraz tłumaczenie.`;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
-      })
-    });
-
-    const data = await response.json();
-    
-    if (data.error) {
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      return res.status(200).send(`BŁĄD GOOGLE API: ${JSON.stringify(data.error)}`);
+    if (!title) {
+        return res.status(400).send("Brak tytułu utworu.");
     }
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Model zwrócił pustą odpowiedź.';
+    try {
+        // 1. Czyszczenie tytułu i autora ze śmieci YouTube (VEVO, Official, nawiasy, wytwórnie)
+        let cleanTitle = title
+            .replace(/\(Official.*?\)/gi, '')
+            .replace(/\[Official.*?\]/gi, '')
+            .replace(/official music video/gi, '')
+            .replace(/lyrics/gi, '')
+            .trim();
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send(aiText);
+        let cleanAuthor = author ? author
+            .replace(/VEVO/gi, '')
+            .replace(/- Topic/gi, '')
+            .replace(/Records/gi, '')
+            .replace(/Hollywood/gi, '') // usuwa problematyczne słowa jak Hollywood
+            .trim() : '';
 
-  } catch (error) {
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    return res.status(200).send('BŁĄD CATCH: ' + error.message);
-  }
+        // 2. Przygotowanie kilku wariantów zapytań do YouTube, żeby uniknąć zacięcia
+        const searchQueries = [
+            `${cleanAuthor} ${cleanTitle} lyrics`,
+            `${cleanTitle} ${cleanAuthor}`,
+            cleanTitle // Ostatnia deska ratunku - sam tytuł
+        ];
+
+        let lyricsFound = null;
+
+        // Próbujemy kolejnych wariantów zapytania, dopóki któryś nie zadziała
+        for (const query of searchQueries) {
+            if (!query.trim()) continue;
+            
+            try {
+                // Tutaj wywołujesz swoją logikę pobierania z YouTube / serwisu z tekstami
+                // np. szukanie filmiku lub napisu pasującego do zapytania `query`
+                lyricsFound = await fetchLyricsFromProvider(query);
+                if (lyricsFound) break; // Jeśli znaleziono, przerywamy pętlę
+            } catch (e) {
+                // Ignorujemy błąd pojedynczej próby i lecimy do kolejnego wariantu
+            }
+        }
+
+        if (lyricsFound) {
+            res.status(200).send(lyricsFound);
+        } else {
+            res.status(404).send("Nie udało się znaleźć tekstu dla podanego utworu. Spróbuj wybrać inny wynik z listy.");
+        }
+
+    } catch (error) {
+        res.status(500).send("Błąd serwera AI. Spróbuj ponownie.");
+    }
 }
