@@ -119,7 +119,7 @@
             color: #fff;
         }
         
-        /* Styl dedykowanego czatu AI pod odtwarzaczem */
+        /* Styl czatu GPT pod odtwarzaczem */
         #ai-chat-container {
             background: #111322;
             border: 1px solid #32385c;
@@ -128,7 +128,7 @@
             margin-top: 15px;
         }
         #chat-messages {
-            height: 150px;
+            height: 180px;
             overflow-y: auto;
             font-size: 12px;
             color: #d1d5db;
@@ -141,6 +141,7 @@
             padding: 8px 10px;
             border-radius: 8px;
             line-height: 1.4;
+            white-space: pre-line;
         }
         .chat-msg.user {
             background: #23273e;
@@ -175,7 +176,7 @@
 
 <div class="container">
     <h1>POLSKI YOUTUBE</h1>
-    <div class="subtitle">Wersja z Asystentem AI i Odtwarzaczem</div>
+    <div class="subtitle">Odtwarzacz z Asystentem ChatGPT</div>
 
     <!-- Wyszukiwarka tradycyjna -->
     <div class="section">
@@ -191,14 +192,14 @@
         <iframe id="youtube-iframe" src="https://www.youtube.com/embed/kJQP7kiw5Fk" allowfullscreen></iframe>
     </div>
 
-    <!-- Dedykowany Czat AI Pod Odtwarzaczem -->
+    <!-- Prawdziwy Czat AI Pod Odtwarzaczem -->
     <div id="ai-chat-container">
-        <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #a855f7;">🤖 Asystent AI (Zapytaj o piosenkę lub napisz np. "włącz Sanah")</div>
+        <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #a855f7;">🤖 Czat AI (Zapytaj o cokolwiek lub wpisz "włącz [tytuł]")</div>
         <div id="chat-messages">
-            <div class="chat-msg ai">Cześć! Jestem Twoim asystentem. Pomogę Ci znaleźć utwór, opowiem o jego tematyce lub włączę go na Twoje polecenie. W czym pomóc?</div>
+            <div class="chat-msg ai">Cześć! Jestem Twoim inteligentnym asystentem. Możesz mnie zapytać o pogodę, poprosić o ciekawostkę albo napisać np. „włącz Sanah”, a natychmiast to zrobię!</div>
         </div>
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Wpisz zapytanie do AI..." onkeydown="if(event.key==='Enter') sendToAI()">
+            <input type="text" id="chat-input" placeholder="Zadaj pytanie lub wydaj polecenie..." onkeydown="if(event.key==='Enter') sendToAI()">
             <button onclick="sendToAI()">Wyślij</button>
         </div>
     </div>
@@ -252,7 +253,7 @@
         document.getElementById('results-list').style.display = 'none';
     }
 
-    // Obsługa inteligentnego czatu AI pod spodem
+    // Główna funkcja czatu obsługująca zarówno komendy muzyczne, jak i pytania ogólne do AI
     async function sendToAI() {
         const inputField = document.getElementById('chat-input');
         const text = inputField.value.trim();
@@ -260,12 +261,12 @@
 
         if (!text) return;
 
-        // Dodaj wiadomość użytkownika
+        // Wyświetlenie wiadomości użytkownika
         chatMessages.innerHTML += `<div class="chat-msg user">${text}</div>`;
         inputField.value = '';
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // Sprawdzamy, czy użytkownik chce włączyć utwór (np. "włącz [tytuł]")
+        // 1. Sprawdzamy, czy użytkownik chce włączyć utwór
         if (text.toLowerCase().startsWith('włącz') || text.toLowerCase().startsWith('odtwórz')) {
             const songQuery = text.replace(/włącz|odtwórz/gi, '').trim();
             chatMessages.innerHTML += `<div class="chat-msg ai">Szukam i włączam: ${songQuery}...</div>`;
@@ -284,36 +285,35 @@
 
                     if (vId) {
                         selectVideo(vId, vAuthor, vTitle);
-                        chatMessages.innerHTML += `<div class="chat-msg ai">Gotowe! Odtwarzam utwór: ${vAuthor} - ${vTitle}.</div>`;
+                        chatMessages.lastChild.remove();
+                        chatMessages.innerHTML += `<div class="chat-msg ai">Gotowe! Odtwarzam: <b>${vAuthor} - ${vTitle}</b>.</div>`;
                     }
                 } else {
+                    chatMessages.lastChild.remove();
                     chatMessages.innerHTML += `<div class="chat-msg ai">Nie udało się znaleźć takiego utworu na YouTube.</div>`;
                 }
             } catch (err) {
-                chatMessages.innerHTML += `<div class="chat-msg ai">Wystąpił błąd podczas wyszukiwania.</div>`;
+                chatMessages.innerHTML += `<div class="chat-msg ai">Wystąpił błąd podczas wyszukiwania wideo.</div>`;
             }
             chatMessages.scrollTop = chatMessages.scrollHeight;
             return;
         }
 
-        // Ogólne zapytania do AI (np. o aktualnie odtwarzany utwór lub inne pytania)
-        chatMessages.innerHTML += `<div class="chat-msg ai">Myślę...</div>`;
+        // 2. Jeśli to zwykłe pytanie (np. o pogodę, sens piosenki, ciekawostkę), wysyłamy do serwera AI
+        chatMessages.innerHTML += `<div class="chat-msg ai">Pisze odpowiedź...</div>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
-            // Wywołujemy Twój endpoint AI z pytaniem oraz kontekstem obecnej piosenki
-            const response = await fetch(`/api/ai-lyrics?title=${encodeURIComponent(currentTitle)}&author=${encodeURIComponent(currentAuthor)}&prompt=${encodeURIComponent(text)}`);
-            
-            if (!response.ok) throw new Error('Błąd serwera');
+            const response = await fetch(`/api/ai-lyrics?prompt=${encodeURIComponent(text)}&title=${encodeURIComponent(currentTitle)}&author=${encodeURIComponent(currentAuthor)}`);
             
             const aiReply = await response.text();
             
-            // Usuwamy wiadomość "Myślę..." i wstawiamy odpowiedź
+            // Usuwamy "Pisze odpowiedź..." i wstawiamy właściwą odpowiedź z AI
             chatMessages.lastChild.remove();
             chatMessages.innerHTML += `<div class="chat-msg ai">${aiReply}</div>`;
         } catch (error) {
             chatMessages.lastChild.remove();
-            chatMessages.innerHTML += `<div class="chat-msg ai">Aktualnie odtwarzany utwór to: <b>${currentAuthor} - ${currentTitle}</b>. O co dokładnie chcesz zapytać? Możesz też napisać np. "włącz [nazwa piosenki]".</div>`;
+            chatMessages.innerHTML += `<div class="chat-msg ai">Przepraszam, wystąpił problem z połączeniem z serwerem AI.</div>`;
         }
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
