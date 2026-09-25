@@ -55,7 +55,6 @@
             color: #fff;
             border: 1px solid #32385c;
             outline: none;
-            transition: border-color 0.2s;
         }
         input:focus {
             border-color: #a855f7;
@@ -142,11 +141,11 @@
 
 <div class="container">
     <h1>POLSKI YOUTUBE</h1>
-    <div class="subtitle">Wersja 3.1 & 2.3 – Kafelki i Stabilny Backend</div>
+    <div class="subtitle">Wersja 2.3 – Inteligentny Tekst PL (AI)</div>
 
     <div class="section">
         <input type="text" id="search-input" placeholder="np. Dawid Podsiadło" onkeydown="if(event.key==='Enter') searchSong()">
-        <button onclick="searchSong()">Szukaj / Załaduj</button>
+        <button onclick="searchSong()">Szukaj utworów</button>
         <div id="results-list"></div>
     </div>
 
@@ -157,7 +156,7 @@
     </div>
 
     <div class="section" style="margin-top: 12px;">
-        <div id="lyrics-area">Wyszukaj utwór, aby go odtworzyć.</div>
+        <div id="lyrics-area">Wyszukaj i wybierz utwór z listy powyżej.</div>
     </div>
 
     <div class="section">
@@ -174,15 +173,6 @@
     let currentTitle = "I Ciebie też bardzo";
     let currentAuthor = "Dawid Podsiadło";
 
-    function extractVideoId(input) {
-        if (!input) return null;
-        input = input.trim();
-        if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = input.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    }
-
     async function searchSong() {
         const query = document.getElementById('search-input').value.trim();
         const lyricsArea = document.getElementById('lyrics-area');
@@ -190,12 +180,6 @@
         
         if (!query) {
             alert('Wpisz tytuł!');
-            return;
-        }
-
-        const directId = extractVideoId(query);
-        if (directId) {
-            selectVideo(directId, "Bezpośredni link", "Film YouTube");
             return;
         }
 
@@ -210,7 +194,7 @@
             const results = data.items || (Array.isArray(data) ? data : []);
             
             if (results.length > 0) {
-                lyricsArea.innerHTML = `<strong>Wybierz wersję z kafelków poniżej:</strong>`;
+                lyricsArea.innerHTML = `<strong>Wybierz właściwą wersję z listy poniżej:</strong>`;
                 resultsList.style.display = 'block';
 
                 results.slice(0, 6).forEach(item => {
@@ -227,12 +211,6 @@
                         resultsList.appendChild(div);
                     }
                 });
-
-                // Automatycznie wybierz pierwszy film z listy
-                const first = results[0];
-                if (first && (first.videoId || first.videoid)) {
-                    selectVideo(first.videoId || first.videoid, first.author || "", first.title || "");
-                }
             } else {
                 lyricsArea.innerHTML = `Nie znaleziono wideo.`;
             }
