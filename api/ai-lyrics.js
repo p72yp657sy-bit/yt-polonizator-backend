@@ -13,42 +13,48 @@ export default async function handler(req, res) {
         return res.status(400).send("Brak zapytania.");
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-        return res.status(200).send(`Oto odpowiedź: "${prompt}". (Brak skonfigurowanego klucza GEMINI_API_KEY w Vercelu).`);
+        return res.status(500).send("Brak skonfigurowanego klucza OPENAI_API_KEY w zmiennych Vercela.");
     }
 
     try {
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const openAiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey.trim()}`
             },
             body: JSON.stringify({
-                contents: [
+                model: "gpt-4o-mini",
+                messages: [
                     {
-                        parts: [
-                            {
-                                text: `Jesteś miłym asystentem AI w aplikacji muzycznej z polskim YouTube. Użytkownik słucha utworu: "${author} - ${title}". Odpowiadaj na pytania wprost, po polsku.\n\nPytanie użytkownika: ${prompt}`
-                            }
-                        ]
+                        role: "system",
+                        content: `Jesteś inteligentnym, wszechstronnym asystentem AI (ChatGPT) wbudowanym w aplikację muzyczną. Użytkownik słucha aktualnie utworu: "${author} - ${title}". Odpowiadaj na jego pytania wyczerpująco i naturalnie po polsku.`
+                    },
+                    {
+                        role: "user",
+                        content: prompt
                     }
-                ]
+                ],
+                max_tokens: 500
             })
         });
 
-        const data = await geminiRes.json();
+        const data = await openAiRes.json();
         
-        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-            return res.status(200).send(data.candidates[0].content.parts[0].text);
+        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+            return res.status(200).send(data.choices[0].message.content);
+        } else if (data.error) {
+            console.error("OpenAI API Error:", data.error);
+            return res.status(200).send(`Błąd OpenAI: ${data.error.message}`);
         } else {
-            console.error("Gemini Error:", data);
-            return res.status(200).send("Nie udało się uzyskać odpowiedzi od modelu Gemini.");
+            return res.status(200).send("Otrzymano pustą odpowiedź od modelu AI.");
         }
 
     } catch (error) {
-        console.error("Fetch Error:", error);
-        return res.status(200).send("Wystąpił błąd podczas komunikacji z API Gemini.");
+        console.error("Server Error:", error);
+        return res.status(200).send("Wystąpił błąd krytyczny po stronie serwera.");
     }
 }
