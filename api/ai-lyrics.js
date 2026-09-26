@@ -13,7 +13,6 @@ export default async function handler(req, res) {
         return res.status(400).send("Brak zapytania.");
     }
 
-    // Używamy zmiennej OPENROUTER_API_KEY
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -26,13 +25,11 @@ export default async function handler(req, res) {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey.trim()}`,
-                // Opcjonalne nagłówki zalecane przez OpenRouter dla statystyk aplikacji
                 "HTTP-Referer": "https://github.com",
                 "X-Title": "YT Polonizator"
             },
             body: JSON.stringify({
-                model: "google/gemma-2-9b-it:free",
-, // Darmowy model z OpenRouter
+                model: "mistralai/mistral-7b-instruct:free", // Używamy stabilnego darmowego modelu Mistral
                 messages: [
                     {
                         role: "system",
@@ -52,12 +49,12 @@ export default async function handler(req, res) {
         if (data.choices && data.choices.length > 0 && data.choices[0].message) {
             return res.status(200).send(data.choices[0].message.content);
         } else if (data.error) {
-            return res.status(200).send(`OpenRouter Error: ${data.error.message}`);
+            return res.status(200).send(`OpenRouter Error: ${data.error.message || JSON.stringify(data.error)}`);
         } else {
-            return res.status(200).send("Otrzymano pustą odpowiedź od OpenRouter.");
+            return res.status(200).send(`Otrzymano odpowiedź bez choices: ${JSON.stringify(data)}`);
         }
 
     } catch (error) {
-        return res.status(200).send("Wystąpił błąd techniczny podczas łączenia z OpenRouter.");
+        return res.status(200).send(`Błąd techniczny: ${error.message}`);
     }
 }
