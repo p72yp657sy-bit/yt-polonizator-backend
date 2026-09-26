@@ -31,7 +31,8 @@ export default async function handler(req, res) {
                 "X-Title": "YT Polonizator"
             },
             body: JSON.stringify({
-                model: "deepseek/deepseek-chat:free", // Darmowy model z OpenRouter
+                model: "google/gemma-2-9b-it:free",
+, // Darmowy model z OpenRouter
                 messages: [
                     {
                         role: "system",
