@@ -29,7 +29,7 @@ export default async function handler(req, res) {
                 "X-Title": "YT Polonizator"
             },
             body: JSON.stringify({
-                model: "mistralai/mistral-7b-instruct:free", // Używamy stabilnego darmowego modelu Mistral
+                model: "openrouter/free", // Automatyczny router wybierający darmowe modele
                 messages: [
                     {
                         role: "system",
