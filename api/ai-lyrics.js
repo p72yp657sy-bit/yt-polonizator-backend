@@ -13,31 +13,29 @@ export default async function handler(req, res) {
         return res.status(400).send("Brak zapytania.");
     }
 
-    // Używamy zmiennej GROQ_API_KEY
-    const apiKey = process.env.GROQ_API_KEY;
+    // Używamy zmiennej OPENROUTER_API_KEY
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-        return res.status(200).send("Błąd: Brak klucza GROQ_API_KEY w zmiennych środowiskowych Vercela.");
+        return res.status(200).send("Błąd: Brak klucza OPENROUTER_API_KEY w zmiennych środowiskowych Vercela.");
     }
 
     try {
-        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey.trim()}`
+                "Authorization": `Bearer ${apiKey.trim()}`,
+                // Opcjonalne nagłówki zalecane przez OpenRouter dla statystyk aplikacji
+                "HTTP-Referer": "https://github.com",
+                "X-Title": "YT Polonizator"
             },
             body: JSON.stringify({
-                model: "gemma2-9b-it",
-
-
-
-
-
+                model: "deepseek/deepseek-chat:free", // Darmowy model z OpenRouter
                 messages: [
                     {
                         role: "system",
-                        content: `Jesteś miłym, wszechstronnym asystentem AI. Odpowiadaj na pytania użytkownika w naturalny sposób, pomagaj mu w codziennych sprawach i prowadź konwersację po polsku. Jeśli użytkownik poprosi Cię o włączenie jakiejś piosenki lub utworu muzycznego, w swojej odpowiedzi uwzględnij jasną komendę w formacie: WŁĄCZ: [Tytuł i Wykonawca], aby system mógł ją odtworzyć."
+                        content: "Jesteś miłym, wszechstronnym asystentem AI. Odpowiadaj na pytania użytkownika w naturalny sposób, pomagaj mu w codziennych sprawach i prowadź konwersację po polsku. Jeśli użytkownik poprosi Cię o włączenie jakiejś piosenki lub utworu muzycznego, w swojej odpowiedzi uwzględnij jasną komendę w formacie: WŁĄCZ: [Tytuł i Wykonawca], aby system mógł ją odtworzyć."
                     },
                     {
                         role: "user",
@@ -48,17 +46,17 @@ export default async function handler(req, res) {
             })
         });
 
-        const data = await groqRes.json();
+        const data = await openRouterRes.json();
         
         if (data.choices && data.choices.length > 0 && data.choices[0].message) {
             return res.status(200).send(data.choices[0].message.content);
         } else if (data.error) {
-            return res.status(200).send(`Groq Error: ${data.error.message}`);
+            return res.status(200).send(`OpenRouter Error: ${data.error.message}`);
         } else {
-            return res.status(200).send("Otrzymano pustą odpowiedź od Groq.");
+            return res.status(200).send("Otrzymano pustą odpowiedź od OpenRouter.");
         }
 
     } catch (error) {
-        return res.status(200).send("Wystąpił błąd techniczny podczas łączenia z Groq.");
+        return res.status(200).send("Wystąpił błąd techniczny podczas łączenia z OpenRouter.");
     }
 }
